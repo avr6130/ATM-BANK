@@ -9,3 +9,10 @@ Another test for file collisions.
 Yet another, made locally.
 
 Remote modify.
+
+Remote modify - choose this
+
+Remote modify - don't choose this
+
+Remote modify - choose this
+
