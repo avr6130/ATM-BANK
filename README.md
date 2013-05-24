@@ -12,7 +12,7 @@ Remote modify.
 
 Remote modify - choose this
 
-Remote modify - don't choose this
+Local modify - choose this
 
 Remote modify - choose this
 
