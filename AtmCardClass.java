@@ -1,3 +1,6 @@
+import java.io.IOException;
+import java.io.Serializable;
+
 /**
  * Created with IntelliJ IDEA.
  * User: aricco
@@ -5,5 +8,23 @@
  * Time: 1:15 PM
  * To change this template use File | Settings | File Templates.
  */
-public class AtmCardClass {
-}
+public class AtmCardClass implements Serializable {
+
+    private String customerName;
+    private int accountNumber;
+
+    public AtmCardClass(String name, int accountNumber) {
+
+        this.customerName = name;
+        this.accountNumber = accountNumber;
+    } // end AtmCardClass constructor
+
+    public String getName() {
+        return customerName;
+    } // end getName
+
+    public int getAccountNumber() {
+        return accountNumber;
+    } // end getAccountNumber
+
+} // end AtmCardClass
