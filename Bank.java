@@ -28,7 +28,7 @@ public class Bank {
 
             // Check to see if the file that contains the accounts exists.
             // If it doesn't then create the accounts and write them to the file.
-            if (!new File("accountsFile.objs").isFile()) {
+            if (!new File("accountsFile").isFile()) {
 
                 // Set up initial accounts with account names and balances
                 accountManager.createAccount("Alice", 100.00);
