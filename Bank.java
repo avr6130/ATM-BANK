@@ -35,11 +35,11 @@ public class Bank {
                 accountManager.createAccount("Bob", 100.00);
                 accountManager.createAccount("Carol", 0.00);
 
-                accountManager.storeAccounts();
+                accountManager.storeAllAccounts();
 
             } // end if File
             else {
-                accountManager.retrieveAccounts();
+                accountManager.retrieveAllAccounts();
             } // end else
 
             accountManager.printAllAccounts();

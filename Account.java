@@ -9,7 +9,7 @@ public class Account implements Serializable
 	private int acctno;
 	private int pinno;
 	private double balance;
-	
+    private AtmCardClass atmCard;
 
     Account(String Name, int acct, int pin, double bal)
     {
@@ -17,7 +17,8 @@ public class Account implements Serializable
 		acctno = acct;
 		pinno = pin;
 		balance = bal;
-		
+        atmCard = new AtmCardClass(name, acctno);
+
 	}
 
     public void print()
@@ -45,6 +46,9 @@ public class Account implements Serializable
 		return balance;
 	}
 
+    public AtmCardClass getAtmCard() {
+        return atmCard;
+    }
 	
  public void setName(String Name)
     {

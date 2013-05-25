@@ -1,4 +1,5 @@
 // Added to project
+
 import java.io.IOException;
 
 /**
@@ -14,39 +15,55 @@ public class AccountManager {
 
     // Just provide some initial values for account variables
     private static final int MAX_ACCOUNTS = 3;
-    private static int accountNumber     = 1654192;
-    private static int numberOfAccounts  = 0;
-    private static int pin               = 1740;
-    private static Account[] accts       = new Account[MAX_ACCOUNTS];
+    private static int accountNumber = 16849327;
+    private static int numberOfAccounts = 0;
+    private static int initialPin = 1095;
+    private static Account[] accts = new Account[MAX_ACCOUNTS];
     private static Disk fileIO;
 
-    public void createAccount(String customerName, double initialBalance) {
+    public void createAccount(String customerName, double initialBalance) throws IOException {
 
-        accts[numberOfAccounts] = new Account(customerName, accountNumber, pin, initialBalance);
+        try {
+            // Create the account, including an ATM card internal to constructor.
+            accts[numberOfAccounts] = new Account(customerName, accountNumber, initialPin, initialBalance);
 
-        // Debug
-        accts[numberOfAccounts].print();
+            createAtmCardFile(accts[numberOfAccounts].getAtmCard());
 
-        // Manipulate account variables
-        numberOfAccounts++;
-        accountNumber++;
-        pin += 2578;
+            // Debug
+            accts[numberOfAccounts].print();
+
+            // Manipulate account variables
+            numberOfAccounts++;
+            accountNumber++;
+            initialPin += 2578;
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            e.getMessage();
+        }
 
     } // end createAccount
 
     public void printAllAccounts() {
-        for (int i=0; i<MAX_ACCOUNTS; i++) {
+        for (int i = 0; i < MAX_ACCOUNTS; i++) {
             accts[i].print();
         } // end for
     } // end printAllAccounts
 
-    public void retrieveAccounts() throws IOException {
-        accts = (Account[]) fileIO.load("accountsFile.objs");
-    } // end retrieveAccounts
+    public void retrieveAllAccounts() throws IOException {
+        accts = (Account[]) Disk.load("accountsFile");
+    } // end retrieveAllAccounts
 
-    public void storeAccounts() throws IOException {
-       fileIO.save(accts, "accountsFile.objs");
-    } // end storeAccounts
+    public void storeAllAccounts() throws IOException {
+        Disk.save(accts, "accountsFile");
+    } // end storeAllAccounts
 
+    public void createAtmCardFile(AtmCardClass atmCard) throws IOException {
+        Disk.save(atmCard, atmCard.getName() + ".card");
+    } // end createAtmCardFile
 
-}
+    public AtmCardClass retrieveAtmCard(String name) throws IOException {
+        return (AtmCardClass) Disk.load(name + ".card");
+    } // end retrieveCard
+
+} // class AccountManager
