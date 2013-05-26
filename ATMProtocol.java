@@ -1,3 +1,5 @@
+import messaging.SessionRequest;
+
 import java.io.*;
 
 /**
@@ -10,7 +12,8 @@ public class ATMProtocol implements Protocol {
 
     private PrintWriter writer;
     private BufferedReader reader;
-    private TransactionManager transactionManager = new TransactionManager();
+    private TransactionManager atmTransactionManager = new TransactionManager();
+    private SessionRequest sessionRequest;
 
     public ATMProtocol(InputStream inputStream, OutputStream outputStream) {
         writer = new PrintWriter(outputStream, true);
@@ -34,20 +37,44 @@ public class ATMProtocol implements Protocol {
 
         // Split the input command on whitespace
         String[] splitCmdString = command.split("\\s+");
+        boolean sessionIsAuthorized;
 
         if (splitCmdString[0].toLowerCase().matches("begin-session")) {
 
-            boolean loginSuccessful = transactionManager.requestSession(splitCmdString);
-            if (!loginSuccessful)
-                System.out.println("Unauthorized");
-            else
-                System.out.println("User " + splitCmdString[1] + " is authorized.");
+            if (atmTransactionManager.transactionActive()) {
+                System.out.println("Transaction currently in progress.  Please end-session before beginning a new session.");
+            } // end if transactionActive()
+            else {
 
-        } // end begin-session
+                // Send a request to the bank to start a session
+                sessionRequest = atmTransactionManager.requestSession(splitCmdString);
+                if (sessionRequest == null)
+                    System.out.println("Unauthorized");
+                else {
+
+                    String msgString = (sessionRequest.getPin() + " " + sessionRequest.getAccountNumber() + "\n");
+                    //writer.write(sessionRequest.getPin() + sessionRequest.getAccountNumber() + "\n");
+                    writer.write(msgString);
+                    writer.flush();
+                }
+
+                    //System.out.println("User " + splitCmdString[1] + " is authorized.");
+            } // end else transaction is not active
+
+        } // end if begin-session request
+
         else if (splitCmdString[0].toLowerCase().matches("balance")) {
-            System.out.println("balance entered");
+            if (!atmTransactionManager.transactionActive()) {
+                System.out.println("Unauthorized");
+            } // end if !transaction.isActive
+            else {
+                atmTransactionManager.requestBalance(splitCmdString);
+                System.out.println("balance successfully requested");
+            } // end else transaction is active
 
-        } else if (splitCmdString[0].toLowerCase().matches("withdraw")) {
+        } // end else if balance request
+
+        else if (splitCmdString[0].toLowerCase().matches("withdraw")) {
             System.out.println("withdraw entered");
 
         } else if (splitCmdString[0].toLowerCase().matches("end-session")) {

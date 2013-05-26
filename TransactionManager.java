@@ -1,3 +1,5 @@
+import messaging.BalanceRequest;
+import messaging.BalanceResponse;
 import messaging.SessionRequest;
 import messaging.SessionResponse;
 
@@ -13,14 +15,16 @@ import java.io.IOException;
  */
 
 public class TransactionManager {
-    private final short MAX_FAILED_ATTEMPTS = 3;
-    private final int NUM_OF_SECS = 60;
     private boolean transactionActive = false;
-    private short numberOfFailedLoginAttempts = 0;
     private AtmCardClass atmCard;
     private File cardFile;
+
+    private int numberOfFailedLoginAttempts;
+
     private SessionRequest sessionRequest;
     private SessionResponse sessionResponse;
+    private BalanceRequest balanceRequest;
+    private BalanceResponse balanceResponse;
 
     public TransactionManager() {
     }
@@ -29,15 +33,17 @@ public class TransactionManager {
         return transactionActive;
     } // end transactionActive
 
-    public boolean requestSession(String[] splitCmdString) throws IOException {
+    public SessionRequest requestSession(String[] splitCmdString) throws IOException {
 
-        int enteredPin;
+        int enteredPin = 0;
 
         // Check if more than one argument was read from stdin
         if (!(splitCmdString.length > 1)) {
 
-            // Tell the caller the request was denied
+            // Not enough command line arguments were given so set the
+            // transaction state to inactive and the session request to null
             transactionActive = false;
+            sessionRequest = null;
 
         } // end if length < 1
 
@@ -46,75 +52,80 @@ public class TransactionManager {
             // Prepare and read the ATM card for the requested username
             cardFile = new File(splitCmdString[1] + ".card");
 
+            // if the card doesn't exist with the given user name
             if (!cardFile.isFile()) {
 
-                // Tell the caller the request was denied
+                // User's name does not match the card or the file doesn't exist so set the
+                // transaction state to inactive and the session request to null
                 transactionActive = false;
+                sessionRequest = null;
 
-            } // end if not a card file
+            } // end if not a valid card file
 
             else { // this IS a valid card file
+
+                // Read the ATM card into a class variable
                 atmCard = (AtmCardClass) Disk.load(splitCmdString[1] + ".card");
 
-                if (atmCard.getNextValidLoginTime() > System.currentTimeMillis()) {
-                    long time1 = System.currentTimeMillis();
-                    System.out.println("This account is currently locked out.  Try again later.");
+                // Get the pin
+                System.out.print("Enter your PIN: ");
+                enteredPin = cin.readInt();
 
-                    // Tell the caller the request was denied
-                    transactionActive = false;
+                // Get the required information out of the card and prepare the message
+                sessionRequest = new SessionRequest(enteredPin, atmCard.getAccountNumber());
 
-                } // if locked out
-                else { // not locked out
-
-                    System.out.print("Enter your PIN: ");
-                    enteredPin = cin.readInt();
-
-                    sessionRequest = new SessionRequest(enteredPin, atmCard.getAccountNumber());
-
-                    // TODO
-                    // send the sessionRequest message to the bank
-                    // Debug Debug Debug  Debug  Debug  Debug  Debug  Debug  Debug  Debug
-                    // the next line should use if (sessionResponse.isSessionValid()   )
-                    //if (enteredPin != sessionRequest.getPin())
-                    if (enteredPin != 3) {
-
-                        numberOfFailedLoginAttempts++;
-
-                        if (numberOfFailedLoginAttempts == MAX_FAILED_ATTEMPTS) {
-
-                            // Set a lockout time on the ATM card
-                            atmCard.setNextValidLoginTime((NUM_OF_SECS * 1000L) + System.currentTimeMillis());
-
-                            // Rewrite the ATM card with a lockout time in the future
-                            Disk.save(atmCard, atmCard.getName() + ".card");
-
-                            System.out.println("Maximum login attempts exceeded.  Login for this account is temporarily disabled");
-
-                            transactionActive = false;
-
-                        } // end if MAX_FAILED_ATTEMPTS
-
-                    } // This comment should change after debugging end if enteredPin != getPin()
-                    else { // entered pin matches stored pin
-                        transactionActive = true;
-                    } // end else entered pin matches stored pin
-                } // else not locked out
             } // end else this IS a valid card file
+
         } // end else splitCmdString.length IS greater than 1 so multiple args were given
 
-        // Tell the caller the result of the request
-        return transactionActive;
+        // Return the message to be sent, or null
+        return sessionRequest;
 
     } // end requestSession
 
-    public boolean loginLockedOut() {
-        if (numberOfFailedLoginAttempts < MAX_FAILED_ATTEMPTS) {
-            return false;
-        } // end if
-        else {
-            return true;
-        } // end else
+    private void simulateBankRecvSessionRequest(SessionRequest sessionRequest) {
+    }
 
-    } // end loginLockedOut
+    public boolean requestBalance(String[] splitCmdString) {
+
+        boolean success = false;
+
+        try {
+            // Read the ATM card for username and account number
+            readAtmCard(splitCmdString);
+
+            if (atmCard == null) {
+                success = false;
+            } // end if atmCard == null
+            else {
+                // Send a balance request to the back
+                balanceRequest = new BalanceRequest(atmCard.getAccountNumber());
+                success = true;
+            } // end else atmCard not null
+
+        } catch (IOException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        } // end catch
+        return success;  //To change body of created methods use File | Settings | File Templates.
+
+    }  // end requestBalance
+
+    private void readAtmCard(String[] splitCmdString) throws IOException {
+
+        // Prepare and read the ATM card for the requested username
+        cardFile = new File(splitCmdString[1] + ".card");
+
+        if (!cardFile.isFile()) {
+
+            // Not a valid card file so set the card class variable to null.
+            atmCard = null;
+
+        } else { // this IS a valid card file
+
+            // Load the contents of the stored card into the card class variable.
+            atmCard = (AtmCardClass) Disk.load(splitCmdString[1] + ".card");
+        }
+
+    } // end readAtmCard
 
 } // end class TransactionManager

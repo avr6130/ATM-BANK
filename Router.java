@@ -83,6 +83,7 @@ public class Router {
                 if ((len = atmSocketInputStream.available()) > 0) {
                     atmSocketInputStream.read(buf,0,len);
                     bankSocketOutputStream.write(buf,0,len);
+                    bankSocketOutputStream.flush();
                     System.out.println("sent " + len + " bytes from ATM to Bank");
                 }
             } catch (IOException e) {

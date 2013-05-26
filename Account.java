@@ -3,73 +3,82 @@
 import java.io.*;
 
 
-public class Account implements Serializable
-{
-	private String name;
-	private int acctno;
-	private int pinno;
-	private double balance;
+public class Account implements Serializable {
+    private String name;
+    private int acctno;
+    private int pinno;
+    private double balance;
     private AtmCardClass atmCard;
+    private long nextValidLoginTime = System.currentTimeMillis();
+    private short currentNumOfFailedLoginAttempts = 0;
 
-    Account(String Name, int acct, int pin, double bal)
-    {
+    Account(String Name, int acct, int pin, double bal) {
         name = Name;
-		acctno = acct;
-		pinno = pin;
-		balance = bal;
+        acctno = acct;
+        pinno = pin;
+        balance = bal;
         atmCard = new AtmCardClass(name, acctno);
-
-	}
-
-    public void print()
-    {
-           System.out.println("Acct# " + acctno + "\n" + "Pin# " + pinno + "\n" + "Name " + name + "\n" + "Acct Bal " + balance + "\n"  );
     }
 
-    public String getName()
-    {
-		return name;
-	}
+    public void incrementCurrentNumOfFailedLoginAttempts() {
+        currentNumOfFailedLoginAttempts++;
+    }
 
-	public int getID()
-	{
-		return acctno;
-	}
+    public void resetCurrentNumOfFailedLoginAttempts() {
+        currentNumOfFailedLoginAttempts = 0;
+    }
 
-	public int getPin()
-	{
-		return pinno;
-	}
+    public short getCurrentNumOfFailedLoginAttempts() {
+        return currentNumOfFailedLoginAttempts;
+    }
 
-	public double getBal()
-	{
-		return balance;
-	}
+    public void setNextValidLoginTime(long nextValidLoginTime) {
+        this.nextValidLoginTime = nextValidLoginTime;
+    }
+
+    public long getNextValidLoginTime() {
+        return nextValidLoginTime;
+    }
+
+    public void print() {
+        System.out.println("Acct# " + acctno + "\n" + "Pin# " + pinno + "\n" + "Name " + name + "\n" + "Acct Bal " + balance + "\n");
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public int getID() {
+        return acctno;
+    }
+
+    public int getPin() {
+        return pinno;
+    }
+
+    public double getBal() {
+        return balance;
+    }
 
     public AtmCardClass getAtmCard() {
         return atmCard;
     }
-	
- public void setName(String Name)
-    {
-		name= new String(Name);
-	}
 
-	public void setId(int ID)
-	{
-		acctno=ID;
-	}
+    public void setName(String Name) {
+        name = new String(Name);
+    }
 
-	public void setPin(int Pin)
-	{
-		pinno=Pin;
-	}
+    public void setId(int ID) {
+        acctno = ID;
+    }
 
-	public void setBal(double Bal)
-	{
-		balance=Bal;
-	}
+    public void setPin(int Pin) {
+        pinno = Pin;
+    }
 
-	
+    public void setBal(double Bal) {
+        balance = Bal;
+    }
+
 
 }

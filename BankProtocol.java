@@ -1,3 +1,5 @@
+import messaging.MessageHandler;
+
 import java.io.*;
 
 /**
@@ -10,6 +12,8 @@ public class BankProtocol implements Protocol {
 
     private PrintWriter writer;
     private BufferedReader reader;
+    private MessageHandler messageHandler;
+    private AccountManager accountManager = new AccountManager();
 
     public BankProtocol(InputStream inputStream, OutputStream outputStream) {
         writer = new PrintWriter(outputStream, true);
@@ -21,6 +25,7 @@ public class BankProtocol implements Protocol {
         String input;
 
         while ((input = reader.readLine()) != null) {
+            System.out.println("After while Inside Bank processRemoteCommandssss");
             processRemoteCommand(input);
         }
     }
@@ -39,6 +44,19 @@ public class BankProtocol implements Protocol {
 
     /* Process a remote command and write out the result. */
     private synchronized void processRemoteCommand(String command) {
+        boolean authenticated;
+        System.out.println("Inside Bank processRemoteCommand");
+
+        // Split the input command on whitespace
+        String[] splitCmdString = command.split("\\s+");
+
+        // messageHandler.processMessage();
+        authenticated = accountManager.validateSessionRequest(splitCmdString);
+
+        if (authenticated)
+            System.out.println("Authenticated.");
+        else
+            System.out.println("Failed to authenticate.");
 
     }
 
