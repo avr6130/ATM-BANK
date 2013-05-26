@@ -1,5 +1,3 @@
-package messaging;
-
 import java.io.File;
 
 /**
