@@ -1,7 +1,9 @@
+import messaging.TransactionManager;
+
 import java.io.*;
 
 /**
- * An ATMProtocol processes local commands sent to the ATM and writes to or reads
+ * An ATMProtocol processes local splitStr[0]s sent to the ATM and writes to or reads
  * from the router as necessary. You can use whatever method you would like to
  * read from and write to the router, but this is an example to get you started.
  */
@@ -10,7 +12,7 @@ public class ATMProtocol implements Protocol {
 
     private PrintWriter writer;
     private BufferedReader reader;
-
+    private TransactionManager transactionManager;
 
     public ATMProtocol(InputStream inputStream, OutputStream outputStream) {
         writer = new PrintWriter(outputStream, true);
@@ -29,22 +31,24 @@ public class ATMProtocol implements Protocol {
         stdIn.close();
     }
 
-    /* Interpret a command sent to the ATM and print the result to the output stream. */
-    private void processCommand(String command) {
+    /* Interpret a splitStr[0] sent to the ATM and print the result to the output stream. */
+    private void processCommand(String command) throws IOException {
 
-        if (command.toLowerCase().matches("begin-session")) {
-            System.out.println("begin-session entered");
+        // Split the input command on whitespace
+        String[] splitCmdString = command.split("\\s+");
 
-        } else if (command.toLowerCase().matches("balance")) {
+        if (splitCmdString[0].toLowerCase().matches("begin-session")) {
+
+            transactionManager.requestSession(splitCmdString);
+
+        } // end begin-session
+        else if (splitCmdString[0].toLowerCase().matches("balance")) {
             System.out.println("balance entered");
 
-        } else if (command.toLowerCase().matches("deposit")) {
-            System.out.println("deposit entered");
-
-        } else if (command.toLowerCase().matches("withdraw")) {
+        } else if (splitCmdString[0].toLowerCase().matches("withdraw")) {
             System.out.println("withdraw entered");
 
-        } else if (command.toLowerCase().matches("end-session")) {
+        } else if (splitCmdString[0].toLowerCase().matches("end-session")) {
             System.out.println("end-session entered");
 
         } else {

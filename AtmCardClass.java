@@ -12,9 +12,12 @@ public class AtmCardClass implements Serializable {
 
     private String customerName;
     private int accountNumber;
+    private long nextValidLoginTime = System.currentTimeMillis();
+
+    // Default constructor used for reading in the card file on disk
+    public AtmCardClass() {}
 
     public AtmCardClass(String name, int accountNumber) {
-
         this.customerName = name;
         this.accountNumber = accountNumber;
     } // end AtmCardClass constructor
