@@ -1,5 +1,3 @@
-import messaging.TransactionManager;
-
 import java.io.*;
 
 /**
@@ -12,7 +10,7 @@ public class ATMProtocol implements Protocol {
 
     private PrintWriter writer;
     private BufferedReader reader;
-    private TransactionManager transactionManager;
+    private TransactionManager transactionManager = new TransactionManager();
 
     public ATMProtocol(InputStream inputStream, OutputStream outputStream) {
         writer = new PrintWriter(outputStream, true);
@@ -39,7 +37,11 @@ public class ATMProtocol implements Protocol {
 
         if (splitCmdString[0].toLowerCase().matches("begin-session")) {
 
-            transactionManager.requestSession(splitCmdString);
+            boolean loginSuccessful = transactionManager.requestSession(splitCmdString);
+            if (!loginSuccessful)
+                System.out.println("Unauthorized");
+            else
+                System.out.println("User " + splitCmdString[1] + " is authorized.");
 
         } // end begin-session
         else if (splitCmdString[0].toLowerCase().matches("balance")) {

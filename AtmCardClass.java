@@ -22,6 +22,10 @@ public class AtmCardClass implements Serializable {
         this.accountNumber = accountNumber;
     } // end AtmCardClass constructor
 
+    public void setNextValidLoginTime (long nextLoginTime) {
+       this.nextValidLoginTime = nextLoginTime;
+    } // end setNextValidLoginTime
+
     public String getName() {
         return customerName;
     } // end getName
@@ -29,5 +33,9 @@ public class AtmCardClass implements Serializable {
     public int getAccountNumber() {
         return accountNumber;
     } // end getAccountNumber
+
+    public long getNextValidLoginTime () {
+        return nextValidLoginTime;
+    } // end getNextValidLoginTime
 
 } // end AtmCardClass
