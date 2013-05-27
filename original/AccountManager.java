@@ -1,4 +1,4 @@
-// Added to project
+package original;
 
 import java.io.IOException;
 
@@ -25,7 +25,7 @@ public class AccountManager {
     public void createAccount(String customerName, double initialBalance) throws IOException {
 
         try {
-            // Create the account, including an ATM card internal to constructor.
+            // Create the account, including an original.ATM card internal to constructor.
             accts[numberOfAccounts] = new Account(customerName, accountNumber, initialPin, initialBalance);
 
             createAtmCardFile(accts[numberOfAccounts].getAtmCard());
@@ -106,7 +106,7 @@ public class AccountManager {
 
         // Check the pin
         Integer lPin = accts[curAcct].getPin();
-        if (!lPin.toString().matches(inputPin)) {
+        if (lPin.toString().matches(inputPin)) {
             accts[curAcct].incrementCurrentNumOfFailedLoginAttempts();
 
             return authenticated = false;
@@ -115,5 +115,6 @@ public class AccountManager {
             accts[curAcct].resetCurrentNumOfFailedLoginAttempts();
             return authenticated = true;
         }
+
     }
-} // class AccountManager
+} // class original.AccountManager

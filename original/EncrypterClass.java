@@ -1,4 +1,4 @@
-// Copied from http://www.java2s.com/Code/Java/Security/EncryptingaStringwithDES.htm
+package original;// Copied from http://www.java2s.com/Code/Java/Security/EncryptingaStringwithDES.htm
 // Modified to use byte[] instead of strings.  
 
 import java.security.Key;

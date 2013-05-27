@@ -1,4 +1,4 @@
-// Java core packages
+package original;// Java core packages
 
 import java.io.*;
 import java.util.*;
@@ -43,6 +43,6 @@ public class cout  {
 	}
 
 
-} //end of cout
+} //end of original.cout
 
 

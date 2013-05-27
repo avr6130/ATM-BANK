@@ -1,9 +1,11 @@
+package original;
+
 import messaging.MessageHandler;
 
 import java.io.*;
 
 /**
- * A BankProtocol processes local and remote commands sent to the Bank and writes to
+ * A original.BankProtocol processes local and remote commands sent to the original.Bank and writes to
  * or reads from the router as necessary. You can use whatever method you would like to
  * read from and write to the router, but this is an example to get you started.
  */
@@ -25,7 +27,7 @@ public class BankProtocol implements Protocol {
         String input;
 
         while ((input = reader.readLine()) != null) {
-            System.out.println("After while Inside Bank processRemoteCommandssss");
+            System.out.println("After while Inside original.Bank processRemoteCommandssss");
             processRemoteCommand(input);
         }
     }
@@ -45,18 +47,19 @@ public class BankProtocol implements Protocol {
     /* Process a remote command and write out the result. */
     private synchronized void processRemoteCommand(String command) {
         boolean authenticated;
-        System.out.println("Inside Bank processRemoteCommand");
 
         // Split the input command on whitespace
-        String[] splitCmdString = command.split("\\s+");
+//       String[] splitCmdString = command.split("\\s+");
 
-        // messageHandler.processMessage();
-        authenticated = accountManager.validateSessionRequest(splitCmdString);
+        messageHandler.processMessage(command);
+//        authenticated = accountManager.validateSessionRequest(splitCmdString);
 
+        /*
         if (authenticated)
             System.out.println("Authenticated.");
         else
             System.out.println("Failed to authenticate.");
+        */
 
     }
 

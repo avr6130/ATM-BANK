@@ -1,3 +1,5 @@
+package original;
+
 import messaging.BalanceRequest;
 import messaging.BalanceResponse;
 import messaging.SessionRequest;
@@ -49,7 +51,7 @@ public class TransactionManager {
 
         else { // splitCmdString.length IS greater than 1 so multiple args were given
 
-            // Prepare and read the ATM card for the requested username
+            // Prepare and read the original.ATM card for the requested username
             cardFile = new File(splitCmdString[1] + ".card");
 
             // if the card doesn't exist with the given user name
@@ -64,7 +66,7 @@ public class TransactionManager {
 
             else { // this IS a valid card file
 
-                // Read the ATM card into a class variable
+                // Read the original.ATM card into a class variable
                 atmCard = (AtmCardClass) Disk.load(splitCmdString[1] + ".card");
 
                 // Get the pin
@@ -91,7 +93,7 @@ public class TransactionManager {
         boolean success = false;
 
         try {
-            // Read the ATM card for username and account number
+            // Read the original.ATM card for username and account number
             readAtmCard(splitCmdString);
 
             if (atmCard == null) {
@@ -112,7 +114,7 @@ public class TransactionManager {
 
     private void readAtmCard(String[] splitCmdString) throws IOException {
 
-        // Prepare and read the ATM card for the requested username
+        // Prepare and read the original.ATM card for the requested username
         cardFile = new File(splitCmdString[1] + ".card");
 
         if (!cardFile.isFile()) {
@@ -128,4 +130,4 @@ public class TransactionManager {
 
     } // end readAtmCard
 
-} // end class TransactionManager
+} // end class original.TransactionManager

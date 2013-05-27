@@ -1,3 +1,5 @@
+package original;
+
 import java.io.IOException;
 import java.io.Serializable;
 
@@ -19,7 +21,7 @@ public class AtmCardClass implements Serializable {
     public AtmCardClass(String name, int accountNumber) {
         this.customerName = name;
         this.accountNumber = accountNumber;
-    } // end AtmCardClass constructor
+    } // end original.AtmCardClass constructor
 
     public String getName() {
         return customerName;
@@ -29,4 +31,4 @@ public class AtmCardClass implements Serializable {
         return accountNumber;
     } // end getAccountNumber
 
-} // end AtmCardClass
+} // end original.AtmCardClass

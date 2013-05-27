@@ -1,9 +1,11 @@
+package original;
+
 import messaging.SessionRequest;
 
 import java.io.*;
 
 /**
- * An ATMProtocol processes local splitStr[0]s sent to the ATM and writes to or reads
+ * An original.ATMProtocol processes local splitStr[0]s sent to the original.ATM and writes to or reads
  * from the router as necessary. You can use whatever method you would like to
  * read from and write to the router, but this is an example to get you started.
  */
@@ -32,7 +34,7 @@ public class ATMProtocol implements Protocol {
         stdIn.close();
     }
 
-    /* Interpret a splitStr[0] sent to the ATM and print the result to the output stream. */
+    /* Interpret a splitStr[0] sent to the original.ATM and print the result to the output stream. */
     private void processCommand(String command) throws IOException {
 
         // Split the input command on whitespace
@@ -52,7 +54,7 @@ public class ATMProtocol implements Protocol {
                     System.out.println("Unauthorized");
                 else {
 
-                    String msgString = (sessionRequest.getPin() + " " + sessionRequest.getAccountNumber() + "\n");
+                    String msgString = ("sessionRequest " + sessionRequest.getPin() + " " + sessionRequest.getAccountNumber() + "\n");
                     //writer.write(sessionRequest.getPin() + sessionRequest.getAccountNumber() + "\n");
                     writer.write(msgString);
                     writer.flush();

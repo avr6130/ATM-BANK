@@ -1,4 +1,4 @@
-// Java core packages
+package original;// Java core packages
 
 import java.io.*;
 import java.util.*;
@@ -113,6 +113,6 @@ public class cin  {
 
 
 
-} //end of cin
+} //end of original.cin
 
 
