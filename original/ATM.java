@@ -4,17 +4,17 @@ import java.io.*;
 import java.net.Socket;
 
 /**
- * The main class for the original.ATM.
+ * The main class for the ATM.
  */
 
 public class ATM {
 
-    private static final String prompt = "original.ATM: ";
+    private static final String prompt = "ATM: ";
 
     public static void main(String[] args) {
 
         if(args.length != 1) {
-            System.out.println("Usage: java original.ATM <original.ATM-port>");
+            System.out.println("Usage: java ATM <ATM-port>");
             System.exit(1);
         }
 
@@ -46,7 +46,7 @@ public class ATM {
             }
 
         } catch (IOException e) {
-            System.out.println("Could not connect to original.ATM on port " + atmPort + ". Please try a different port.");
+            System.out.println("Could not connect to ATM on port " + atmPort + ". Please try a different port.");
             System.exit(0);
         }
     }

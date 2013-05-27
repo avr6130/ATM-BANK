@@ -1,4 +1,4 @@
-package original;// Used SourceTree to create a Git repository and added to GitHub
+package original;
 
 import java.io.*;
 

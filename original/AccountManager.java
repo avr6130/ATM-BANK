@@ -25,7 +25,7 @@ public class AccountManager {
     public void createAccount(String customerName, double initialBalance) throws IOException {
 
         try {
-            // Create the account, including an original.ATM card internal to constructor.
+            // Create the account, including an ATM card internal to constructor.
             accts[numberOfAccounts] = new Account(customerName, accountNumber, initialPin, initialBalance);
 
             createAtmCardFile(accts[numberOfAccounts].getAtmCard());
@@ -70,8 +70,9 @@ public class AccountManager {
     public boolean validateSessionRequest(String[] splitCmdString) {
 
         // Split the input on whitespace
-        String inputPin     = splitCmdString[0];
-        String inputAcctNum = splitCmdString[1];
+        String msgType      = splitCmdString[0];
+        String inputPin     = splitCmdString[1];
+        String inputAcctNum = splitCmdString[2];
 
         int curAcct = 0;
         boolean authenticated = false;
@@ -95,6 +96,8 @@ public class AccountManager {
 
         if (accts[curAcct].getCurrentNumOfFailedLoginAttempts() >= MAX_FAILED_ATTEMPTS) {
 
+            System.out.println("MAX_FAILED_LOGIN_ATTEMPTS.");
+
             // Set the valid login time into the future to avoid repetitive false login attempts
             accts[curAcct].setNextValidLoginTime((NUM_OF_LOCKOUT_SECONDS * 1000L) + System.currentTimeMillis());
 
@@ -105,16 +108,18 @@ public class AccountManager {
         } // end if now MAX_FAILED_ATTEMPTS
 
         // Check the pin
-        Integer lPin = accts[curAcct].getPin();
-        if (lPin.toString().matches(inputPin)) {
+        Integer enteredPin = accts[curAcct].getPin();
+        if (!enteredPin.toString().matches(inputPin)) {
+            System.out.println("PIN didn't match.");
             accts[curAcct].incrementCurrentNumOfFailedLoginAttempts();
 
             return authenticated = false;
         } // end if entered pin != pin
         else { // The pin entered must have been good
+            System.out.println("AUTHENTICATED!!.");
             accts[curAcct].resetCurrentNumOfFailedLoginAttempts();
             return authenticated = true;
         }
 
     }
-} // class original.AccountManager
+} // class AccountManager

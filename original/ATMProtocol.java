@@ -5,7 +5,7 @@ import messaging.SessionRequest;
 import java.io.*;
 
 /**
- * An original.ATMProtocol processes local splitStr[0]s sent to the original.ATM and writes to or reads
+ * An ATMProtocol processes local splitStr[0]s sent to the ATM and writes to or reads
  * from the router as necessary. You can use whatever method you would like to
  * read from and write to the router, but this is an example to get you started.
  */
@@ -34,7 +34,15 @@ public class ATMProtocol implements Protocol {
         stdIn.close();
     }
 
-    /* Interpret a splitStr[0] sent to the original.ATM and print the result to the output stream. */
+//    /* Process a remote command. */
+//    private synchronized void processRemoteCommand(String command) {
+//        boolean authenticated;
+//
+//        messageHandler.processMessage(command);
+//
+//    }
+
+ /* Interpret a splitStr[0] sent to the ATM and print the result to the output stream. */
     private void processCommand(String command) throws IOException {
 
         // Split the input command on whitespace

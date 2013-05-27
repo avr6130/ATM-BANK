@@ -1,5 +1,7 @@
 package messaging;
 
+import original.AccountManager;
+
 /**
  * Created with IntelliJ IDEA.
  * User: Team2
@@ -34,6 +36,21 @@ public class MessageHandler {
         }
     }
 
+    public void processMessage(String msg) {
+
+        // Split the input command on whitespace
+        String[] splitCmdString = msg.split("\\s+");
+
+        if (splitCmdString[0].matches("sessionRequest")) {
+            processSessionRequest(splitCmdString);
+        }
+
+    } // end processMessage(String)
+
+    private void processSessionRequest(String[] splitCmdString) {
+        AccountManager accountManager = new AccountManager();
+        accountManager.validateSessionRequest(splitCmdString);
+    }
     private void processWithdrawResponse(WithdrawResponse payload) {
         //TODO
     }

@@ -10,8 +10,8 @@ import java.net.Socket;
 
 public class Bank {
 
-    private final static String prompt = "original.Bank: ";
-    //private static original.Account[] accts; //User account array
+    private final static String prompt = "Bank: ";
+    //private static Account[] accts; //User account array
     private static AccountManager accountManager = new AccountManager();
 
     public static void main(String[] args) {
@@ -20,7 +20,7 @@ public class Bank {
         open(); //Initialize user accounts
 
         if (args.length != 1) {
-            System.out.println("Usage: java original.Bank <original.Bank-port>");
+            System.out.println("Usage: java Bank <Bank-port>");
             System.exit(1);
         }
 
