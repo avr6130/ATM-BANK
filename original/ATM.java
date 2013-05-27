@@ -13,7 +13,7 @@ public class ATM {
 
     public static void main(String[] args) {
 
-        if(args.length != 1) {
+        if (args.length != 1) {
             System.out.println("Usage: java ATM <ATM-port>");
             System.exit(1);
         }
@@ -23,7 +23,7 @@ public class ATM {
         try {
             /* Connect to port */
             Socket socket = new Socket("localhost", atmPort);
-            Protocol atmProtocol = new ATMProtocol(socket.getInputStream(), socket.getOutputStream());
+            Protocol atmProtocol = new ATMProtocol(socket);
 
             /* Handle command-line input */
             System.out.print(prompt);

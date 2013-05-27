@@ -1,8 +1,10 @@
 package original;
 
+import messaging.Message;
 import messaging.SessionRequest;
 
 import java.io.*;
+import java.net.Socket;
 
 /**
  * An ATMProtocol processes local splitStr[0]s sent to the ATM and writes to or reads
@@ -12,14 +14,19 @@ import java.io.*;
 
 public class ATMProtocol implements Protocol {
 
-    private PrintWriter writer;
-    private BufferedReader reader;
-    private TransactionManager atmTransactionManager = new TransactionManager();
+    //private PrintWriter writer;
+    //private BufferedReader reader;
+    private ObjectOutputStream writer;
+    private ObjectInputStream reader;    private TransactionManager atmTransactionManager = new TransactionManager();
     private SessionRequest sessionRequest;
 
-    public ATMProtocol(InputStream inputStream, OutputStream outputStream) {
-        writer = new PrintWriter(outputStream, true);
-        reader = new BufferedReader(new InputStreamReader(inputStream));
+    //public ATMProtocol(InputStream inputStream, OutputStream outputStream) {
+        //writer = new PrintWriter(outputStream, true);
+        //reader = new BufferedReader(new InputStreamReader(inputStream));
+    //public ATMProtocol(ObjectOutputStream objectOutputStream, ObjectInputStream objectInputStream) throws IOException {
+    public ATMProtocol(Socket socket) throws IOException {
+        writer = new ObjectOutputStream(socket.getOutputStream());
+        reader = new ObjectInputStream(socket.getInputStream());
     }
 
     /* Continue to read input until terminated. */
@@ -48,6 +55,7 @@ public class ATMProtocol implements Protocol {
         // Split the input command on whitespace
         String[] splitCmdString = command.split("\\s+");
         boolean sessionIsAuthorized;
+        Message msg = new Message();
 
         if (splitCmdString[0].toLowerCase().matches("begin-session")) {
 
@@ -62,10 +70,10 @@ public class ATMProtocol implements Protocol {
                     System.out.println("Unauthorized");
                 else {
 
-                    String msgString = ("sessionRequest " + sessionRequest.getPin() + " " + sessionRequest.getAccountNumber() + "\n");
-                    //writer.write(sessionRequest.getPin() + sessionRequest.getAccountNumber() + "\n");
-                    writer.write(msgString);
-                    writer.flush();
+                    //String msgString = ("sessionRequest " + sessionRequest.getPin() + " " + sessionRequest.getAccountNumber() + "\n");
+                    //writer.write(msgString);
+                    msg.setPayload(sessionRequest);
+                    writer.writeObject(msg);
                 }
 
                     //System.out.println("User " + splitCmdString[1] + " is authorized.");

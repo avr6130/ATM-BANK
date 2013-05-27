@@ -1,8 +1,12 @@
 package original;
 
+import messaging.Message;
 import messaging.MessageHandler;
+import messaging.Payload;
+import messaging.SessionRequest;
 
 import java.io.*;
+import java.net.Socket;
 
 /**
  * A BankProtocol processes local and remote commands sent to the Bank and writes to
@@ -12,22 +16,36 @@ import java.io.*;
 
 public class BankProtocol implements Protocol {
 
-    private PrintWriter writer;
-    private BufferedReader reader;
+    //private PrintWriter writer;
+    //private BufferedReader reader;
+    private ObjectOutputStream writer;
+    private ObjectInputStream reader;
     private MessageHandler messageHandler = new MessageHandler();
     private AccountManager accountManager = new AccountManager();
 
-    public BankProtocol(InputStream inputStream, OutputStream outputStream) {
-        writer = new PrintWriter(outputStream, true);
-        reader = new BufferedReader(new InputStreamReader(inputStream));
+    // public BankProtocol(InputStream inputStream, OutputStream outputStream) {
+    //public BankProtocol(ObjectInputStream objectInputStream, ObjectOutputStream objectOutputStream) throws IOException {
+    public BankProtocol(Socket socket) throws IOException {
+
+        //writer = new PrintWriter(objectOutputStream, true);
+        //reader = new BufferedReader(new InputStreamReader(objectInputStream));
+        writer = new ObjectOutputStream(socket.getOutputStream());
+        reader = new ObjectInputStream(socket.getInputStream());
     }
 
     /* Process commands sent through the router. */
     public void processRemoteCommands() throws IOException {
         String input;
+        // SessionRequest msgObject = new SessionRequest(1,2);
+        Message msgObject;
 
-        while ((input = reader.readLine()) != null) {
-            processRemoteCommand(input);
+        //while ((input = reader.readLine()) != null) {
+        try {
+            while ((msgObject = (Message)reader.readObject()) != null) {
+                processRemoteCommand(msgObject);
+            }
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
         }
     }
 
@@ -44,10 +62,11 @@ public class BankProtocol implements Protocol {
     }
 
     /* Process a remote command. */
-    private synchronized void processRemoteCommand(String command) {
+    //private synchronized void processRemoteCommand(String command) {
+    private synchronized void processRemoteCommand(Message messageObject) {
         boolean authenticated;
 
-        messageHandler.processMessage(command);
+        messageHandler.processMessage(messageObject);
 
     }
 

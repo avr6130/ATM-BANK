@@ -13,7 +13,7 @@ public class Router {
     public static void main(String[] args) {
 
         if (args.length < 2) {
-            System.out.println("Usage: java original.Router <original.Bank port> <original.ATM port>");
+            System.out.println("Usage: java Router <Bank port> <ATM port>");
             System.exit(1);
         }
 
@@ -37,9 +37,9 @@ public class Router {
         try {
             bankSocket = serverSocket.accept();
             serverSocket.close();
-            System.out.println("original.Bank connected to the router.");
+            System.out.println("Bank connected to the router.");
         } catch (IOException e) {
-            System.err.println("original.Bank Socket Accept() failed.");
+            System.err.println("Bank Socket Accept() failed.");
             System.exit(1);
         }
 
@@ -47,9 +47,9 @@ public class Router {
         try {
             atmSocket = clientSocket.accept();
             clientSocket.close();
-            System.out.println("original.ATM connected to the router.");
+            System.out.println("ATM connected to the router.");
         } catch (IOException e) {
-            System.err.println("original.ATM Socket Accept() failed.");
+            System.err.println("ATM Socket Accept() failed.");
             System.exit(1);
         }
 
@@ -79,18 +79,18 @@ public class Router {
                 if ((len = bankSocketInputStream.available()) > 0) {
                     bankSocketInputStream.read(buf,0,len);
                     atmSocketOutputStream.write(buf,0,len);
-                    System.out.println("sent " + len + " bytes from original.Bank to original.ATM");
+                    System.out.println("sent " + len + " bytes from Bank to ATM");
                 }
 
                 if ((len = atmSocketInputStream.available()) > 0) {
                     atmSocketInputStream.read(buf,0,len);
                     bankSocketOutputStream.write(buf,0,len);
                     bankSocketOutputStream.flush();
-                    System.out.println("sent " + len + " bytes from original.ATM to original.Bank");
+                    System.out.println("sent " + len + " bytes from ATM to Bank");
                 }
             } catch (IOException e) {
                 // Connection may have been closed
-                System.out.println("The original.ATM or original.Bank connection to the router may have been closed");
+                System.out.println("The ATM or Bank connection to the router may have been closed");
             }
         }
     }

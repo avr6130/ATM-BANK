@@ -11,7 +11,6 @@ import java.net.Socket;
 public class Bank {
 
     private final static String prompt = "Bank: ";
-    //private static Account[] accts; //User account array
     private static AccountManager accountManager = new AccountManager();
 
     public static void main(String[] args) {
@@ -48,7 +47,8 @@ public class Bank {
 
             /* Connect to port */
             Socket socket = new Socket("localhost", bankPort);
-            final BankProtocol bankProtocol = new BankProtocol(socket.getInputStream(), socket.getOutputStream());
+            //final BankProtocol bankProtocol = new BankProtocol(socket.getInputStream(), socket.getOutputStream());
+            final BankProtocol bankProtocol = new BankProtocol(socket);
 
             /* Handle command-line input */
             Thread local = new Thread() {

@@ -1,5 +1,7 @@
 package original;
 
+import messaging.SessionRequest;
+
 import java.io.IOException;
 
 /**
@@ -67,22 +69,17 @@ public class AccountManager {
         return (AtmCardClass) Disk.load(name + ".card");
     } // end retrieveCard
 
-    public boolean validateSessionRequest(String[] splitCmdString) {
-
-        // Split the input on whitespace
-        String msgType      = splitCmdString[0];
-        String inputPin     = splitCmdString[1];
-        String inputAcctNum = splitCmdString[2];
+    public boolean validateSessionRequest(SessionRequest msg) {
 
         int curAcct = 0;
         boolean authenticated = false;
 
         // This should be a hash table but I'm trying to get the basics of the
-        // assignment down and because there are only 3 elements this is easier for now...
+        // assignment down, and because there are only 3 elements this is easier for now...
         for (curAcct = 0; curAcct < MAX_ACCOUNTS; curAcct++) {
-            Integer id = accts[curAcct].getID();
-            if (id.toString().matches(inputAcctNum))
+            if (msg.getAccountNumber() == accts[curAcct].getID()) {
                 break;
+            } // end if entered account number is valid
         } // end for
 
         if (accts[curAcct].getNextValidLoginTime() > System.currentTimeMillis()) {
@@ -108,18 +105,17 @@ public class AccountManager {
         } // end if now MAX_FAILED_ATTEMPTS
 
         // Check the pin
-        Integer enteredPin = accts[curAcct].getPin();
-        if (!enteredPin.toString().matches(inputPin)) {
+        if (msg.getPin() != accts[curAcct].getPin()) {
             System.out.println("PIN didn't match.");
             accts[curAcct].incrementCurrentNumOfFailedLoginAttempts();
 
             return authenticated = false;
+
         } // end if entered pin != pin
         else { // The pin entered must have been good
             System.out.println("AUTHENTICATED!!.");
             accts[curAcct].resetCurrentNumOfFailedLoginAttempts();
             return authenticated = true;
-        }
-
-    }
+        } // end else -> entered pin is correct
+    } // end validateSessionRequest()
 } // class AccountManager

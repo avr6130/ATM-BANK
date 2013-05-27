@@ -36,21 +36,17 @@ public class MessageHandler {
         }
     }
 
-    public void processMessage(String msg) {
+//    public void processMessage(SessionRequest msg) {
+//
+//            processSessionRequest(msg);
+//
+//    } // end processMessage(SessionRequest)
 
-        // Split the input command on whitespace
-        String[] splitCmdString = msg.split("\\s+");
-
-        if (splitCmdString[0].matches("sessionRequest")) {
-            processSessionRequest(splitCmdString);
-        }
-
-    } // end processMessage(String)
-
-    private void processSessionRequest(String[] splitCmdString) {
+    private void processSessionRequest(SessionRequest msg) {
         AccountManager accountManager = new AccountManager();
-        accountManager.validateSessionRequest(splitCmdString);
+        accountManager.validateSessionRequest(msg);
     }
+
     private void processWithdrawResponse(WithdrawResponse payload) {
         //TODO
     }
@@ -71,7 +67,7 @@ public class MessageHandler {
         //TODO
     }
 
-    private void processSessionRequest(SessionRequest payload) {
-        //TODO
-    }
+//    private void processSessionRequest(SessionRequest payload) {
+//        //TODO
+//    }
 }
