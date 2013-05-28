@@ -44,7 +44,7 @@ public class TransactionManager {
         return transactionActive;
     } // end transactionActive()
 
-    public AuthenticationRequest requestSession(String[] splitCmdString) throws IOException {
+    public AuthenticationRequest authenticateSession(String[] splitCmdString) throws IOException {
 
         int enteredPin = 0;
 
@@ -54,7 +54,7 @@ public class TransactionManager {
             // Not enough command line arguments were given so set the
             // transaction state to inactive and the session request to null
             transactionActive = false;
-            activeAccountNum  = 0;
+            activeAccountNum = 0;
             authenticationRequest = null;
 
         } // end if length < 1
@@ -70,7 +70,7 @@ public class TransactionManager {
                 // User's name does not match the card or the file doesn't exist so set the
                 // transaction state to inactive and the session request to null
                 transactionActive = false;
-                activeAccountNum  = 0;
+                activeAccountNum = 0;
                 authenticationRequest = null;
 
             } // end if not a valid card file
@@ -80,12 +80,24 @@ public class TransactionManager {
                 // Read the original.ATM card into a class variable
                 atmCard = (AtmCardClass) Disk.load(splitCmdString[1] + ".card");
 
-                // Get the pin
-                System.out.print("Enter your PIN: ");
-                enteredPin = cin.readInt();
+                // Check that the name within the card matches the given name
+                if (!atmCard.getName().matches(splitCmdString[1])) {
+                    // User's name does not match the card or the file doesn't exist so set the
+                    // transaction state to inactive and the session request to null
+                    transactionActive = false;
+                    activeAccountNum = 0;
+                    authenticationRequest = null;
 
-                // Get the required information out of the card and prepare the message
-                authenticationRequest = new AuthenticationRequest(enteredPin, atmCard.getAccountNumber());
+                } // end if (!atmCard.getName().matches(splitCmdString[1]))
+                // All checks have passed so prompt for the pin
+                else {
+                    // Get the pin
+                    System.out.print("Enter your PIN: ");
+                    enteredPin = cin.readInt();
+
+                    // Get the required information out of the card and prepare the message
+                    authenticationRequest = new AuthenticationRequest(enteredPin, atmCard.getAccountNumber());
+                }
 
             } // end else this IS a valid card file
 
@@ -94,7 +106,7 @@ public class TransactionManager {
         // Return the message to be sent, or null
         return authenticationRequest;
 
-    } // end requestSession
+    } // end authenticateSession
 
     public void sessionResponse(SessionResponse sessionResponse) {
 

@@ -48,7 +48,7 @@ public class ATMProtocol implements Protocol {
         Message msg = new Message();
 
         try {
-            authenticationRequest = atmTransactionManager.requestSession(splitCmdString);
+            authenticationRequest = atmTransactionManager.authenticateSession(splitCmdString);
 
             if (authenticationRequest == null)
                 System.out.println("Unauthorized");
