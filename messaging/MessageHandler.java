@@ -1,8 +1,5 @@
 package messaging;
 
-import original.AccountManager;
-import original.TransactionManager;
-
 /**
  * Created with IntelliJ IDEA.
  * User: Team2
@@ -20,8 +17,8 @@ public class MessageHandler {
             return;
         }
 
-        if (payload instanceof SessionRequest) {
-            processSessionRequest((SessionRequest) payload);
+        if (payload instanceof AuthenticationRequest) {
+            processSessionRequest((AuthenticationRequest) payload);
         } else if (payload instanceof BalanceRequest) {
             processBalanceRequest((BalanceRequest) payload);
         } else if (payload instanceof WithdrawRequest) {
@@ -38,7 +35,7 @@ public class MessageHandler {
 
     }
 
-    public void processSessionRequest(SessionRequest msg) {
+    public void processSessionRequest(AuthenticationRequest msg) {
         //TODO
     } // end processSessionRequest
 
@@ -61,7 +58,7 @@ public class MessageHandler {
         //TODO
     }
 
-//    private void processSessionRequest(SessionRequest payload) {
+//    private void processSessionRequest(AuthenticationRequest payload) {
 //        //TODO
 //    }
 }

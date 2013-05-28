@@ -1,6 +1,6 @@
 package original;
 
-import messaging.SessionRequest;
+import messaging.AuthenticationRequest;
 
 import java.io.IOException;
 
@@ -69,7 +69,7 @@ public class AccountManager {
         return (AtmCardClass) Disk.load(name + ".card");
     } // end retrieveCard
 
-    public boolean validateSessionRequest(SessionRequest msg) {
+    public boolean authenticateRequest(AuthenticationRequest msg) {
 
         int curAcct = 0;
         boolean authenticated = false;
@@ -117,5 +117,5 @@ public class AccountManager {
             accts[curAcct].resetCurrentNumOfFailedLoginAttempts();
             return authenticated = true;
         } // end else -> entered pin is correct
-    } // end validateSessionRequest()
+    } // end authenticateRequest()
 } // class AccountManager

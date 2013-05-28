@@ -16,7 +16,7 @@ public class ATMProtocol implements Protocol {
     private ObjectOutputStream writer;
     private ObjectInputStream reader;
     private TransactionManager atmTransactionManager = new TransactionManager();
-    private SessionRequest sessionRequest;
+    private AuthenticationRequest authenticationRequest;
     private MessageHandler messageHandler = new MessageHandler();
 
     public ATMProtocol(Socket socket) throws IOException {
@@ -48,13 +48,13 @@ public class ATMProtocol implements Protocol {
         Message msg = new Message();
 
         try {
-            sessionRequest = atmTransactionManager.requestSession(splitCmdString);
+            authenticationRequest = atmTransactionManager.requestSession(splitCmdString);
 
-            if (sessionRequest == null)
+            if (authenticationRequest == null)
                 System.out.println("Unauthorized");
             else {
 
-                msg.setPayload(sessionRequest);
+                msg.setPayload(authenticationRequest);
                 writer.writeObject(msg);
 
                 // After the message is set to bank, prepare to process the response and block
@@ -114,38 +114,16 @@ public class ATMProtocol implements Protocol {
 
         } // end else if balance request
 
-        else if (splitCmdString[0].
-
-                toLowerCase()
-
-                .
-
-                        matches("withdraw")
-
-                )
-
-        {
+        else if (splitCmdString[0].toLowerCase().matches("withdraw")) {
             System.out.println("withdraw entered");
 
-        } else if (splitCmdString[0].
-
-                toLowerCase()
-
-                .
-
-                        matches("end-session")
-
-                )
-
-        {
+        } else if (splitCmdString[0].toLowerCase().matches("end-session")) {
 
             atmTransactionManager.endCurrentTransaction();
 
         } // end else if end-session
 
-        else
-
-        {
+        else {
             System.out.println("Illegal input entered");
         } // end else
 
@@ -174,7 +152,6 @@ public class ATMProtocol implements Protocol {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } // end catch
-
 
     }
 

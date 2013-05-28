@@ -1,8 +1,8 @@
 package original;
 
+import messaging.AuthenticationRequest;
 import messaging.BalanceRequest;
 import messaging.BalanceResponse;
-import messaging.SessionRequest;
 import messaging.SessionResponse;
 
 import java.io.File;
@@ -23,7 +23,7 @@ public class TransactionManager {
     private int activeAccountNum = 0;
     private int numberOfFailedLoginAttempts;
 
-    private SessionRequest sessionRequest;
+    private AuthenticationRequest authenticationRequest;
     private SessionResponse sessionResponse;
     private BalanceRequest balanceRequest;
     private BalanceResponse balanceResponse;
@@ -44,7 +44,7 @@ public class TransactionManager {
         return transactionActive;
     } // end transactionActive()
 
-    public SessionRequest requestSession(String[] splitCmdString) throws IOException {
+    public AuthenticationRequest requestSession(String[] splitCmdString) throws IOException {
 
         int enteredPin = 0;
 
@@ -55,7 +55,7 @@ public class TransactionManager {
             // transaction state to inactive and the session request to null
             transactionActive = false;
             activeAccountNum  = 0;
-            sessionRequest    = null;
+            authenticationRequest = null;
 
         } // end if length < 1
 
@@ -71,7 +71,7 @@ public class TransactionManager {
                 // transaction state to inactive and the session request to null
                 transactionActive = false;
                 activeAccountNum  = 0;
-                sessionRequest    = null;
+                authenticationRequest = null;
 
             } // end if not a valid card file
 
@@ -85,14 +85,14 @@ public class TransactionManager {
                 enteredPin = cin.readInt();
 
                 // Get the required information out of the card and prepare the message
-                sessionRequest = new SessionRequest(enteredPin, atmCard.getAccountNumber());
+                authenticationRequest = new AuthenticationRequest(enteredPin, atmCard.getAccountNumber());
 
             } // end else this IS a valid card file
 
         } // end else splitCmdString.length IS greater than 1 so multiple args were given
 
         // Return the message to be sent, or null
-        return sessionRequest;
+        return authenticationRequest;
 
     } // end requestSession
 

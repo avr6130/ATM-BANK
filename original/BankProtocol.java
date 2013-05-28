@@ -65,9 +65,9 @@ public class BankProtocol implements Protocol {
         try {
 
             Payload payload = messageObject.getPayload();
-            if (payload instanceof SessionRequest) {
+            if (payload instanceof AuthenticationRequest) {
                 AccountManager accountManager = new AccountManager();
-                authenticated = accountManager.validateSessionRequest((SessionRequest) payload);
+                authenticated = accountManager.authenticateRequest((AuthenticationRequest) payload);
                 tempAcctNumber = payload.getAccountNumber();
 
                 // Create the SessionResponse object and give it the account number and result of PIN validation.
@@ -79,7 +79,7 @@ public class BankProtocol implements Protocol {
                 // Send the message back to the ATM
                 writer.writeObject(msg);
 
-            } // end SessionRequest
+            } // end AuthenticationRequest
 
             // This is completely fake, but is here to test that basic balance response is
             // handled properly on the ATM side.
