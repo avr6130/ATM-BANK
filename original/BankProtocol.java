@@ -52,12 +52,20 @@ public class BankProtocol implements Protocol {
     /* Process a remote command. */
     //private synchronized void processRemoteCommand(String command) {
     private synchronized void processRemoteCommand(Message messageObject) {
-        boolean authenticated;
+        boolean authenticated = false;
 
-        authenticated = messageHandler.processMessage(messageObject);
 
-        // ###########################################################
-        // This is probably temporary but useful for initial testing of message exchange.
+        //authenticated = messageHandler.processMessage(messageObject);
+
+        // ########### temporary #####################################
+        // This is temporary but useful for initial testing of message exchange.
+        Payload payload = messageObject.getPayload();
+        if (payload instanceof SessionRequest) {
+            AccountManager accountManager = new AccountManager();
+            authenticated = accountManager.validateSessionRequest((SessionRequest)payload);
+        }
+
+        // Now send the session response back to the ATM
         try {
             Message msg = new Message();
 
@@ -74,7 +82,7 @@ public class BankProtocol implements Protocol {
             e.printStackTrace();
             e.getMessage();
         } // end catch
-        // ###########################################################
+        // ########### temporary #####################################
 
     } // end processRemoteCommand
 

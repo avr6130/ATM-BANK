@@ -11,7 +11,7 @@ import original.TransactionManager;
  */
 public class MessageHandler {
 
-    public boolean processMessage(Message msg) {
+    public void processMessage(Message msg) {
 
         // Needed for debug, not necessarily for final product
         boolean status = false;
@@ -20,11 +20,11 @@ public class MessageHandler {
 
         if (payload == null) {
             System.err.println("Message does not contain payload");
-            return status;
+            return;
         }
 
         if (payload instanceof SessionRequest) {
-            status = processSessionRequest((SessionRequest) payload);
+            processSessionRequest((SessionRequest) payload);
         } else if (payload instanceof BalanceRequest) {
             processBalanceRequest((BalanceRequest) payload);
         } else if (payload instanceof WithdrawRequest) {
@@ -39,7 +39,6 @@ public class MessageHandler {
             System.err.println("Unknown payload type");
         }
 
-        return status;
     }
 
     //    public void processMessage(SessionRequest msg) {

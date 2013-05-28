@@ -1,8 +1,6 @@
 package original;
 
-import messaging.Message;
-import messaging.MessageHandler;
-import messaging.SessionRequest;
+import messaging.*;
 
 import java.io.*;
 import java.net.Socket;
@@ -108,6 +106,12 @@ public class ATMProtocol implements Protocol {
             //while ((msgObject = (Message)reader.readObject()) != null) {
             msgObject = (Message) reader.readObject();
             messageHandler.processMessage(msgObject);
+
+            Payload payload = msgObject.getPayload();
+            if (payload instanceof SessionResponse) {
+                atmTransactionManager.sessionResponse((SessionResponse) payload);
+            }
+
 
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
