@@ -95,7 +95,7 @@ public class TransactionManager {
                 activeAccountNum = sessionResponse.getAccountNumber();
 
 //                System.out.println(" User " + atmCard.getName() + " is Authorized");
-                System.out.println(" User is Authorized");
+                System.out.println("User is Authorized");
 
             } // end if transactionActive
             else {

@@ -101,12 +101,12 @@ public class ATMProtocol implements Protocol {
 
     } // end processCommand
 
-   public void processRemoteCommands() throws IOException {
+    public void processRemoteCommands() throws IOException {
         Message msgObject;
 
         try {
             //while ((msgObject = (Message)reader.readObject()) != null) {
-             msgObject = (Message) reader.readObject();
+            msgObject = (Message) reader.readObject();
             messageHandler.processMessage(msgObject);
 
         } catch (ClassNotFoundException e) {
