@@ -13,9 +13,6 @@ public class MessageHandler {
 
     public void processMessage(Message msg) {
 
-        // Needed for debug, not necessarily for final product
-        boolean status = false;
-
         Payload payload = msg.getPayload();
 
         if (payload == null) {
@@ -41,15 +38,8 @@ public class MessageHandler {
 
     }
 
-    //    public void processMessage(SessionRequest msg) {
-    private boolean processSessionRequest(SessionRequest msg) {
-
-        boolean authenticated = false;
-        AccountManager accountManager = new AccountManager();
-        authenticated = accountManager.validateSessionRequest(msg);
-
-        return authenticated;
-
+    public void processSessionRequest(SessionRequest msg) {
+        //TODO
     } // end processSessionRequest
 
     private void processWithdrawResponse(WithdrawResponse payload) {
@@ -60,12 +50,7 @@ public class MessageHandler {
         //TODO
     }
 
-    private boolean processSessionResponse(SessionResponse payload) {
-        TransactionManager transactionManager = new TransactionManager();
-        transactionManager.sessionResponse(payload);
-
-        // not really needed as of now
-        return true;
+    private void processSessionResponse(SessionResponse payload) {
     } // end processSessionResponse
 
     private void processWithdrawRequest(WithdrawRequest payload) {

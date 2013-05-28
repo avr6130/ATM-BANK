@@ -31,9 +31,18 @@ public class TransactionManager {
     public TransactionManager() {
     }
 
+    public void endCurrentTransaction() {
+        transactionActive = false;
+        System.out.println(atmCard.getName() + " logged out.");
+    } // end setTransactionActive
+
+    public int getActiveAccountNum() {
+        return activeAccountNum;
+    } // end getActiveAccountNum()
+
     public boolean transactionActive() {
         return transactionActive;
-    } // end transactionActive
+    } // end transactionActive()
 
     public SessionRequest requestSession(String[] splitCmdString) throws IOException {
 
@@ -45,7 +54,8 @@ public class TransactionManager {
             // Not enough command line arguments were given so set the
             // transaction state to inactive and the session request to null
             transactionActive = false;
-            sessionRequest = null;
+            activeAccountNum  = 0;
+            sessionRequest    = null;
 
         } // end if length < 1
 
@@ -60,7 +70,8 @@ public class TransactionManager {
                 // User's name does not match the card or the file doesn't exist so set the
                 // transaction state to inactive and the session request to null
                 transactionActive = false;
-                sessionRequest = null;
+                activeAccountNum  = 0;
+                sessionRequest    = null;
 
             } // end if not a valid card file
 
@@ -94,8 +105,7 @@ public class TransactionManager {
                 // Set the active active account number
                 activeAccountNum = sessionResponse.getAccountNumber();
 
-//                System.out.println(" User " + atmCard.getName() + " is Authorized");
-                System.out.println("User is Authorized");
+                System.out.println("User " + atmCard.getName() + " is Authorized");
 
             } // end if transactionActive
             else {
@@ -109,29 +119,35 @@ public class TransactionManager {
         } // end catch
     } // end sessionResponse
 
-    public boolean requestBalance(String[] splitCmdString) {
+    public void balanceResponse(BalanceResponse balanceResponse) {
+        System.out.println("balance: $" + balanceResponse.getBalance());
+    } // end processBalanceResponse
 
-        boolean success = false;
-
-        try {
-            // Read the original.ATM card for username and account number
-            readAtmCard(splitCmdString);
-
-            if (atmCard == null) {
-                success = false;
-            } // end if atmCard == null
-            else {
-                // Send a balance request to the back
-                balanceRequest = new BalanceRequest(atmCard.getAccountNumber());
-                success = true;
-            } // end else atmCard not null
-
-        } catch (IOException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-        } // end catch
-        return success;  //To change body of created methods use File | Settings | File Templates.
-
-    }  // end requestBalance
+    // Currently don't need this - Delete?
+//    public boolean requestBalance(String[] splitCmdString) {
+//
+//        boolean success = false;
+//
+//        try {
+//            // Read the original.ATM card for username and account number
+//            readAtmCard(splitCmdString);
+//
+//            if (atmCard == null) {
+//                success = false;
+//                System.out.println("requestBalance:problem with ATM card.")
+//            } // end if atmCard == null
+//            else {
+//                // Send a balance request to the back
+//                balanceRequest = new BalanceRequest(atmCard.getAccountNumber());
+//                success = true;
+//            } // end else atmCard not null
+//
+//        } catch (IOException e) {
+//            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+//        } // end catch
+//        return success;  //To change body of created methods use File | Settings | File Templates.
+//
+//    }  // end requestBalance
 
     private void readAtmCard(String[] splitCmdString) throws IOException {
 

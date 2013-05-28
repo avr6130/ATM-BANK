@@ -15,8 +15,9 @@ public class BankProtocol implements Protocol {
 
     private ObjectOutputStream writer;
     private ObjectInputStream reader;
-    private MessageHandler messageHandler = new MessageHandler();
-    private AccountManager accountManager = new AccountManager();
+
+    // ########### temporary #### delete me ######################
+    private int tempAcctNumber = 0;
 
     public BankProtocol(Socket socket) throws IOException {
 
@@ -53,36 +54,47 @@ public class BankProtocol implements Protocol {
     //private synchronized void processRemoteCommand(String command) {
     private synchronized void processRemoteCommand(Message messageObject) {
         boolean authenticated = false;
-
+        Message msg = new Message();
 
         //authenticated = messageHandler.processMessage(messageObject);
 
         // ########### temporary #####################################
         // This is temporary but useful for initial testing of message exchange.
-        Payload payload = messageObject.getPayload();
-        if (payload instanceof SessionRequest) {
-            AccountManager accountManager = new AccountManager();
-            authenticated = accountManager.validateSessionRequest((SessionRequest)payload);
-        }
-
+        // The functionality can probably be used almost as is, but in the proper place.
         // Now send the session response back to the ATM
         try {
-            Message msg = new Message();
 
-            // Create the SessionResponse object and give it the account number and result of PIN validation.
-            SessionResponse sessionResponse = new SessionResponse(messageObject.getPayload().getAccountNumber(), authenticated);
+            Payload payload = messageObject.getPayload();
+            if (payload instanceof SessionRequest) {
+                AccountManager accountManager = new AccountManager();
+                authenticated = accountManager.validateSessionRequest((SessionRequest) payload);
+                tempAcctNumber = payload.getAccountNumber();
 
-            // Set the message payload to the sessionResponse object
-            msg.setPayload(sessionResponse);
+                // Create the SessionResponse object and give it the account number and result of PIN validation.
+                SessionResponse sessionResponse = new SessionResponse(messageObject.getPayload().getAccountNumber(), authenticated);
 
-            // Send the message back to the ATM
-            writer.writeObject(msg);
+                // Set the message payload to the sessionResponse object
+                msg.setPayload(sessionResponse);
+
+                // Send the message back to the ATM
+                writer.writeObject(msg);
+
+            } // end SessionRequest
+
+            // This is completely fake, but is here to test that basic balance response is
+            // handled properly on the ATM side.
+            else if (payload instanceof BalanceRequest) {
+                BalanceResponse balanceResponse = new BalanceResponse(tempAcctNumber, 13);
+                msg.setPayload(balanceResponse);
+                writer.writeObject(msg);
+
+            } // end if BalanceResponse
 
         } catch (IOException e) {
             e.printStackTrace();
             e.getMessage();
         } // end catch
-        // ########### temporary #####################################
+        // ########### end temporary section #####################################
 
     } // end processRemoteCommand
 

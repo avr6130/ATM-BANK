@@ -44,14 +44,54 @@ public class ATMProtocol implements Protocol {
 //
 //    }
 
-    /* Interpret a splitStr[0] sent to the ATM and print the result to the output stream. */
+    private void processBeginSession(String[] splitCmdString) throws IOException {
+        Message msg = new Message();
+
+        try {
+            sessionRequest = atmTransactionManager.requestSession(splitCmdString);
+
+            if (sessionRequest == null)
+                System.out.println("Unauthorized");
+            else {
+
+                msg.setPayload(sessionRequest);
+                writer.writeObject(msg);
+
+                // After the message is set to bank, prepare to process the response and block
+                processRemoteCommands();
+            } // end else
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            e.getMessage();   //To change body of catch statement use File | Settings | File Templates.
+        } // end catch
+    } // end processBeginSession()
+
+    private void processRequestBalance(String[] splitCmdString) throws IOException {
+        Message msg = new Message();
+        BalanceRequest balanceRequest = new BalanceRequest(atmTransactionManager.getActiveAccountNum());
+
+        try {
+
+            msg.setPayload(balanceRequest);
+            writer.writeObject(msg);
+
+            // After the message is set to bank, prepare to process the response and block
+            processRemoteCommands();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            e.getMessage();   //To change body of catch statement use File | Settings | File Templates.
+        } // end catch
+
+        System.out.println("balance successfully requested");
+
+    } // end processRequestBalance()
+
     private void processCommand(String command) throws IOException {
 
         // Split the input command on whitespace
         String[] splitCmdString = command.split("\\s+");
-        boolean sessionIsAuthorized;
-        Message msg = new Message();
-
 
         if (splitCmdString[0].toLowerCase().matches("begin-session")) {
 
@@ -59,20 +99,8 @@ public class ATMProtocol implements Protocol {
                 System.out.println("Transaction currently in progress.  Please end-session before beginning a new session.");
             } // end if transactionActive()
             else {
-
-                // Send a request to the bank to start a session
-                sessionRequest = atmTransactionManager.requestSession(splitCmdString);
-                if (sessionRequest == null)
-                    System.out.println("Unauthorized");
-                else {
-
-                    msg.setPayload(sessionRequest);
-                    writer.writeObject(msg);
-
-                    processRemoteCommands();
-                }
-
-            } // end else transaction is not active
+                processBeginSession(splitCmdString);
+            } // end else
 
         } // end if begin-session request
 
@@ -81,19 +109,43 @@ public class ATMProtocol implements Protocol {
                 System.out.println("Unauthorized");
             } // end if !transaction.isActive
             else {
-                atmTransactionManager.requestBalance(splitCmdString);
-                System.out.println("balance successfully requested");
+                processRequestBalance(splitCmdString);
             } // end else transaction is active
 
         } // end else if balance request
 
-        else if (splitCmdString[0].toLowerCase().matches("withdraw")) {
+        else if (splitCmdString[0].
+
+                toLowerCase()
+
+                .
+
+                        matches("withdraw")
+
+                )
+
+        {
             System.out.println("withdraw entered");
 
-        } else if (splitCmdString[0].toLowerCase().matches("end-session")) {
-            System.out.println("end-session entered");
+        } else if (splitCmdString[0].
 
-        } else {
+                toLowerCase()
+
+                .
+
+                        matches("end-session")
+
+                )
+
+        {
+
+            atmTransactionManager.endCurrentTransaction();
+
+        } // end else if end-session
+
+        else
+
+        {
             System.out.println("Illegal input entered");
         } // end else
 
@@ -105,17 +157,25 @@ public class ATMProtocol implements Protocol {
         try {
             //while ((msgObject = (Message)reader.readObject()) != null) {
             msgObject = (Message) reader.readObject();
-            messageHandler.processMessage(msgObject);
+//            messageHandler.processMessage(msgObject);
 
+            // Pull the payload out of the generic message.  The payload is the
+            // specific message type.
             Payload payload = msgObject.getPayload();
+
             if (payload instanceof SessionResponse) {
                 atmTransactionManager.sessionResponse((SessionResponse) payload);
-            }
+            } // end SessionResponse
 
+            else if (payload instanceof BalanceResponse) {
+                atmTransactionManager.balanceResponse((BalanceResponse) payload);
+            } // end BalanceResponse
 
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
-        }
+        } // end catch
+
+
     }
 
     /* Clean up all open streams. */
