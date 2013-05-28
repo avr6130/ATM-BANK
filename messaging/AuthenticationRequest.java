@@ -6,11 +6,11 @@ package messaging;
  * Date: 5/24/13
  * Time: 9:05 PM
  */
-public class SessionRequest extends Payload {
+public class AuthenticationRequest extends Payload {
 
     private int pin = 0;
 
-    public SessionRequest(int pin, int accountNumber) {
+    public AuthenticationRequest(int pin, int accountNumber) {
         super(accountNumber);
         this.pin = pin;
     }
