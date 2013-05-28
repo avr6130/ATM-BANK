@@ -113,7 +113,7 @@ public class AccountManager {
 
         } // end if entered pin != pin
         else { // The pin entered must have been good
-            System.out.println("AUTHENTICATED!!.");
+            System.out.println("AUTHENTICATED!!");
             accts[curAcct].resetCurrentNumOfFailedLoginAttempts();
             return authenticated = true;
         } // end else -> entered pin is correct

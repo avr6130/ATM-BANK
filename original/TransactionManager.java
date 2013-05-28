@@ -20,7 +20,7 @@ public class TransactionManager {
     private boolean transactionActive = false;
     private AtmCardClass atmCard;
     private File cardFile;
-
+    private int activeAccountNum = 0;
     private int numberOfFailedLoginAttempts;
 
     private SessionRequest sessionRequest;
@@ -85,8 +85,29 @@ public class TransactionManager {
 
     } // end requestSession
 
-    private void simulateBankRecvSessionRequest(SessionRequest sessionRequest) {
-    }
+    public void sessionResponse(SessionResponse sessionResponse) {
+
+        try {
+            // Set the transaction state true or false
+            if (transactionActive = sessionResponse.isSessionValid() == true) {
+
+                // Set the active active account number
+                activeAccountNum = sessionResponse.getAccountNumber();
+
+//                System.out.println(" User " + atmCard.getName() + " is Authorized");
+                System.out.println(" User is Authorized");
+
+            } // end if transactionActive
+            else {
+
+                System.out.println("Unauthorized");
+            } // end else
+
+        } catch (UnknownError e) {
+            e.getMessage();
+            e.printStackTrace();
+        } // end catch
+    } // end sessionResponse
 
     public boolean requestBalance(String[] splitCmdString) {
 

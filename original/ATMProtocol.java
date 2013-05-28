@@ -1,6 +1,7 @@
 package original;
 
 import messaging.Message;
+import messaging.MessageHandler;
 import messaging.SessionRequest;
 
 import java.io.*;
@@ -14,16 +15,12 @@ import java.net.Socket;
 
 public class ATMProtocol implements Protocol {
 
-    //private PrintWriter writer;
-    //private BufferedReader reader;
     private ObjectOutputStream writer;
-    private ObjectInputStream reader;    private TransactionManager atmTransactionManager = new TransactionManager();
+    private ObjectInputStream reader;
+    private TransactionManager atmTransactionManager = new TransactionManager();
     private SessionRequest sessionRequest;
+    private MessageHandler messageHandler = new MessageHandler();
 
-    //public ATMProtocol(InputStream inputStream, OutputStream outputStream) {
-        //writer = new PrintWriter(outputStream, true);
-        //reader = new BufferedReader(new InputStreamReader(inputStream));
-    //public ATMProtocol(ObjectOutputStream objectOutputStream, ObjectInputStream objectInputStream) throws IOException {
     public ATMProtocol(Socket socket) throws IOException {
         writer = new ObjectOutputStream(socket.getOutputStream());
         reader = new ObjectInputStream(socket.getInputStream());
@@ -49,13 +46,14 @@ public class ATMProtocol implements Protocol {
 //
 //    }
 
- /* Interpret a splitStr[0] sent to the ATM and print the result to the output stream. */
+    /* Interpret a splitStr[0] sent to the ATM and print the result to the output stream. */
     private void processCommand(String command) throws IOException {
 
         // Split the input command on whitespace
         String[] splitCmdString = command.split("\\s+");
         boolean sessionIsAuthorized;
         Message msg = new Message();
+
 
         if (splitCmdString[0].toLowerCase().matches("begin-session")) {
 
@@ -70,13 +68,12 @@ public class ATMProtocol implements Protocol {
                     System.out.println("Unauthorized");
                 else {
 
-                    //String msgString = ("sessionRequest " + sessionRequest.getPin() + " " + sessionRequest.getAccountNumber() + "\n");
-                    //writer.write(msgString);
                     msg.setPayload(sessionRequest);
                     writer.writeObject(msg);
+
+                    processRemoteCommands();
                 }
 
-                    //System.out.println("User " + splitCmdString[1] + " is authorized.");
             } // end else transaction is not active
 
         } // end if begin-session request
@@ -104,8 +101,20 @@ public class ATMProtocol implements Protocol {
 
     } // end processCommand
 
-    /* Clean up all open streams. */
+   public void processRemoteCommands() throws IOException {
+        Message msgObject;
 
+        try {
+            //while ((msgObject = (Message)reader.readObject()) != null) {
+             msgObject = (Message) reader.readObject();
+            messageHandler.processMessage(msgObject);
+
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /* Clean up all open streams. */
     public void close() throws IOException {
         writer.close();
         reader.close();

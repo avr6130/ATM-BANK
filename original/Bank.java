@@ -29,6 +29,7 @@ public class Bank {
 
             // Check to see if the file that contains the accounts exists.
             // If it doesn't then create the accounts and write them to the file.
+            // The files used for ATM cards are also created within the AccountManager.
             if (!new File("accountsFile").isFile()) {
 
                 // Set up initial accounts with account names and balances
@@ -47,7 +48,6 @@ public class Bank {
 
             /* Connect to port */
             Socket socket = new Socket("localhost", bankPort);
-            //final BankProtocol bankProtocol = new BankProtocol(socket.getInputStream(), socket.getOutputStream());
             final BankProtocol bankProtocol = new BankProtocol(socket);
 
             /* Handle command-line input */
@@ -60,6 +60,8 @@ public class Bank {
                         bankProtocol.processLocalCommands(stdIn, prompt);
                     } catch (IOException e) {
                         System.out.println("Failed to process user input.");
+                        e.getMessage();
+                        e.printStackTrace();
                         System.exit(0);
                     }
                 }
@@ -72,6 +74,8 @@ public class Bank {
                         bankProtocol.processRemoteCommands();
                     } catch (IOException e) {
                         System.out.println("Failed to process remote input.");
+                        e.getMessage();
+                        e.printStackTrace();
                         System.exit(0);
                     }
                 }

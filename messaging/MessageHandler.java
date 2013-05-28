@@ -1,6 +1,7 @@
 package messaging;
 
 import original.AccountManager;
+import original.TransactionManager;
 
 /**
  * Created with IntelliJ IDEA.
@@ -10,17 +11,20 @@ import original.AccountManager;
  */
 public class MessageHandler {
 
-    public void processMessage(Message msg) {
+    public boolean processMessage(Message msg) {
+
+        // Needed for debug, not necessarily for final product
+        boolean status = false;
 
         Payload payload = msg.getPayload();
 
         if (payload == null) {
             System.err.println("Message does not contain payload");
-            return;
+            return status;
         }
 
         if (payload instanceof SessionRequest) {
-            processSessionRequest((SessionRequest) payload);
+            status = processSessionRequest((SessionRequest) payload);
         } else if (payload instanceof BalanceRequest) {
             processBalanceRequest((BalanceRequest) payload);
         } else if (payload instanceof WithdrawRequest) {
@@ -34,18 +38,20 @@ public class MessageHandler {
         } else {
             System.err.println("Unknown payload type");
         }
+
+        return status;
     }
 
-//    public void processMessage(SessionRequest msg) {
-//
-//            processSessionRequest(msg);
-//
-//    } // end processMessage(SessionRequest)
+    //    public void processMessage(SessionRequest msg) {
+    private boolean processSessionRequest(SessionRequest msg) {
 
-    private void processSessionRequest(SessionRequest msg) {
+        boolean authenticated = false;
         AccountManager accountManager = new AccountManager();
-        accountManager.validateSessionRequest(msg);
-    }
+        authenticated = accountManager.validateSessionRequest(msg);
+
+        return authenticated;
+
+    } // end processSessionRequest
 
     private void processWithdrawResponse(WithdrawResponse payload) {
         //TODO
@@ -55,9 +61,13 @@ public class MessageHandler {
         //TODO
     }
 
-    private void processSessionResponse(SessionResponse payload) {
-        //TODO
-    }
+    private boolean processSessionResponse(SessionResponse payload) {
+        TransactionManager transactionManager = new TransactionManager();
+        transactionManager.sessionResponse(payload);
+
+        // not really needed as of now
+        return true;
+    } // end processSessionResponse
 
     private void processWithdrawRequest(WithdrawRequest payload) {
         //TODO

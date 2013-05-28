@@ -1,9 +1,6 @@
 package original;
 
-import messaging.Message;
-import messaging.MessageHandler;
-import messaging.Payload;
-import messaging.SessionRequest;
+import messaging.*;
 
 import java.io.*;
 import java.net.Socket;
@@ -16,32 +13,23 @@ import java.net.Socket;
 
 public class BankProtocol implements Protocol {
 
-    //private PrintWriter writer;
-    //private BufferedReader reader;
     private ObjectOutputStream writer;
     private ObjectInputStream reader;
     private MessageHandler messageHandler = new MessageHandler();
     private AccountManager accountManager = new AccountManager();
 
-    // public BankProtocol(InputStream inputStream, OutputStream outputStream) {
-    //public BankProtocol(ObjectInputStream objectInputStream, ObjectOutputStream objectOutputStream) throws IOException {
     public BankProtocol(Socket socket) throws IOException {
 
-        //writer = new PrintWriter(objectOutputStream, true);
-        //reader = new BufferedReader(new InputStreamReader(objectInputStream));
         writer = new ObjectOutputStream(socket.getOutputStream());
         reader = new ObjectInputStream(socket.getInputStream());
     }
 
     /* Process commands sent through the router. */
     public void processRemoteCommands() throws IOException {
-        String input;
-        // SessionRequest msgObject = new SessionRequest(1,2);
         Message msgObject;
 
-        //while ((input = reader.readLine()) != null) {
         try {
-            while ((msgObject = (Message)reader.readObject()) != null) {
+            while ((msgObject = (Message) reader.readObject()) != null) {
                 processRemoteCommand(msgObject);
             }
         } catch (ClassNotFoundException e) {
@@ -66,9 +54,29 @@ public class BankProtocol implements Protocol {
     private synchronized void processRemoteCommand(Message messageObject) {
         boolean authenticated;
 
-        messageHandler.processMessage(messageObject);
+        authenticated = messageHandler.processMessage(messageObject);
 
-    }
+        // ###########################################################
+        // This is probably temporary but useful for initial testing of message exchange.
+        try {
+            Message msg = new Message();
+
+            // Create the SessionResponse object and give it the account number and result of PIN validation.
+            SessionResponse sessionResponse = new SessionResponse(messageObject.getPayload().getAccountNumber(), authenticated);
+
+            // Set the message payload to the sessionResponse object
+            msg.setPayload(sessionResponse);
+
+            // Send the message back to the ATM
+            writer.writeObject(msg);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            e.getMessage();
+        } // end catch
+        // ###########################################################
+
+    } // end processRemoteCommand
 
     /* Process user input. */
     private synchronized void processLocalCommand(String command) {
