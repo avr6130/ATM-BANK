@@ -100,15 +100,25 @@ public class BankProtocol implements Protocol {
 
     /* Process user input. */
     private synchronized void processLocalCommand(String command) {
-
+    	
+    	String[] parsedCommand = command.split("\\s");
+    	
+    	// format <command> <name>
+    	if(parsedCommand.length != 2) 
+    		return;
+    	
+    	// parse command and customer name
+    	command = parsedCommand[0];
+    	String name = parsedCommand[1];
+    	
         if (command.toLowerCase().matches("balance")) {
             System.out.println("balance entered");
-
+            
         } else if (command.toLowerCase().matches("deposit")) {
             System.out.println("deposit entered");
 
         } else if (command.toLowerCase().matches("withdraw")) {
-            System.out.println("withdraw entered");
+        	System.out.println("Withdrawals from the bank are not supported.");
 
         } else if (command.toLowerCase().matches("validate")) {
             System.out.println("validate entered");
