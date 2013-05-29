@@ -71,7 +71,7 @@ public class Bank {
             Thread remote = new Thread() {
                 public void run() {
                     try {
-                        bankProtocol.processRemoteCommands();
+                        bankProtocol.processRemoteCommands(prompt);
                     } catch (IOException e) {
                         System.out.println("Failed to process remote input.");
                         e.getMessage();

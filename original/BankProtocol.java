@@ -26,12 +26,19 @@ public class BankProtocol implements Protocol {
     }
 
     /* Process commands sent through the router. */
-    public void processRemoteCommands() throws IOException {
+    public void processRemoteCommands(String prompt) throws IOException {
         Message msgObject;
 
         try {
             while ((msgObject = (Message) reader.readObject()) != null) {
                 processRemoteCommand(msgObject);
+
+                // This was inserted here because the command line reader thread is
+                // currently blocked waiting for input.  That means if the Bank ever outputs
+                // an informational message, the prompt "Bank: " will not be shown unless it
+                // is output here.  Alternatively, it could be removed from here and placed
+                // as the last line of output anywhere the Bank prints a line.
+                System.out.print(prompt);
             }
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
@@ -44,7 +51,6 @@ public class BankProtocol implements Protocol {
 
         while ((userInput = stdIn.readLine()) != null) {
             processLocalCommand(userInput);
-            System.out.print(prompt);
         }
 
         stdIn.close();
