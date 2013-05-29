@@ -84,7 +84,7 @@ public class AccountManager {
 
         if (accts[curAcct].getNextValidLoginTime() > System.currentTimeMillis()) {
 
-            System.out.println("This account is currently locked out.  Try again later.");
+            System.out.println("\nRemote command processed.  This account is currently locked out.  Try again later.");
 
             // Fail authentication/validation and return immediately
             return authenticated = false;
@@ -93,7 +93,7 @@ public class AccountManager {
 
         if (accts[curAcct].getCurrentNumOfFailedLoginAttempts() >= MAX_FAILED_ATTEMPTS) {
 
-            System.out.println("MAX_FAILED_LOGIN_ATTEMPTS.");
+            System.out.println("\nRemote command processed.  MAX_FAILED_LOGIN_ATTEMPTS.");
 
             // Set the valid login time into the future to avoid repetitive false login attempts
             accts[curAcct].setNextValidLoginTime((NUM_OF_LOCKOUT_SECONDS * 1000L) + System.currentTimeMillis());
@@ -106,14 +106,14 @@ public class AccountManager {
 
         // Check the pin
         if (msg.getPin() != accts[curAcct].getPin()) {
-            System.out.println("PIN didn't match.");
+            System.out.println("\nRemote command processed. PIN didn't match.");
             accts[curAcct].incrementCurrentNumOfFailedLoginAttempts();
 
             return authenticated = false;
 
         } // end if entered pin != pin
         else { // The pin entered must have been good
-            System.out.println("AUTHENTICATED!!");
+            System.out.println("\nRemote command processed.  AUTHENTICATED.");
             accts[curAcct].resetCurrentNumOfFailedLoginAttempts();
             return authenticated = true;
         } // end else -> entered pin is correct
