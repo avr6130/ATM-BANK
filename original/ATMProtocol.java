@@ -115,7 +115,7 @@ public class ATMProtocol implements Protocol {
         } // end else if balance request
 
         else if (splitCmdString[0].toLowerCase().matches("withdraw")) {
-            System.out.println("withdraw entered");
+            processRequestWithdraw();
 
         } else if (splitCmdString[0].toLowerCase().matches("end-session")) {
 
@@ -129,7 +129,28 @@ public class ATMProtocol implements Protocol {
 
     } // end processCommand
 
-    public void processRemoteCommands() throws IOException {
+    private void processRequestWithdraw() {
+		double amt = promptForWithdraw();
+		if (amt > 0) {
+			Message msg = new Message();
+	        WithdrawRequest withdrawRequest = new WithdrawRequest(atmTransactionManager.getActiveAccountNum(), amt);
+
+	        try {
+
+	            msg.setPayload(withdrawRequest);
+	            writer.writeObject(msg);
+
+	            // After the message is set to bank, prepare to process the response and block
+	            processRemoteCommands();
+
+	        } catch (IOException e) {
+	            e.printStackTrace();
+	            e.getMessage();   //To change body of catch statement use File | Settings | File Templates.
+	        } // end catch
+		}
+	}
+
+	public void processRemoteCommands() throws IOException {
         Message msgObject;
 
         try {
@@ -148,12 +169,33 @@ public class ATMProtocol implements Protocol {
             else if (payload instanceof BalanceResponse) {
                 atmTransactionManager.balanceResponse((BalanceResponse) payload);
             } // end BalanceResponse
+            else if (payload instanceof WithdrawResponse) {
+            	atmTransactionManager.withdrawResponse((WithdrawResponse) payload);
+            }
 
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } // end catch
 
     }
+    
+	private double promptForWithdraw() {
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
+		double amt = 0.0;
+		System.out.println("Enter the amount to withdraw:");
+
+		// read the amount to withdraw from the command-line
+		try {
+			amt = Double.parseDouble(br.readLine());
+		} catch (IOException ioe) {
+
+		} catch (NumberFormatException e) {
+
+		}
+
+		return amt;
+	}
 
     /* Clean up all open streams. */
     public void close() throws IOException {

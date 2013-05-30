@@ -4,6 +4,7 @@ import messaging.AuthenticationRequest;
 import messaging.BalanceRequest;
 import messaging.BalanceResponse;
 import messaging.AuthenticationResponse;
+import messaging.WithdrawResponse;
 
 import java.io.File;
 import java.io.IOException;
@@ -178,5 +179,9 @@ public class TransactionManager {
         }
 
     } // end readAtmCard
+
+	public void withdrawResponse(WithdrawResponse payload) {
+		System.out.println("$" + payload.getWithdrawAmount() + " dispensed");
+	}
 
 } // end class original.TransactionManager
