@@ -8,14 +8,14 @@ package messaging;
  */
 public class BalanceResponse extends Payload {
 
-    private int balance = 0;
+    private double balance = 0;
 
-    public BalanceResponse(int accountNumber, int balance) {
+    public BalanceResponse(int accountNumber, double balance) {
         super(accountNumber);
         this.balance = balance;
     }
 
-    public int getBalance() {
+    public double getBalance() {
         return this.balance;
     }
 }

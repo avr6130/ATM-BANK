@@ -8,14 +8,14 @@ package messaging;
  */
 public class WithdrawRequest extends Payload {
 
-    private int withdrawAmount = 0;
+    private double withdrawAmount = 0;
 
-    public WithdrawRequest(int accountNumber, int withdrawAmount) {
+    public WithdrawRequest(int accountNumber, double withdrawAmount) {
         super(accountNumber);
         this.withdrawAmount = withdrawAmount;
     }
 
-    public int getWithdrawAmount() {
+    public double getWithdrawAmount() {
         return this.withdrawAmount;
     }
 }

@@ -63,6 +63,7 @@ public class BankProtocol implements Protocol {
         Message msg = new Message();
 
         //authenticated = messageHandler.processMessage(messageObject);
+        
 
         // ########### temporary #####################################
         // This is temporary but useful for initial testing of message exchange.
@@ -90,11 +91,19 @@ public class BankProtocol implements Protocol {
             // This is completely fake, but is here to test that basic balance response is
             // handled properly on the ATM side.
             else if (payload instanceof BalanceRequest) {
-                BalanceResponse balanceResponse = new BalanceResponse(tempAcctNumber, 13);
+                BalanceResponse balanceResponse = new BalanceResponse(tempAcctNumber, AccountManager.processBal(tempAcctNumber));
                 msg.setPayload(balanceResponse);
                 writer.writeObject(msg);
 
             } // end if BalanceResponse
+            else if (payload instanceof WithdrawRequest) {
+            	double amt = ((WithdrawRequest) payload).getWithdrawAmount();
+            	int acctNum = payload.getAccountNumber();
+            	AccountManager.processWith(acctNum, amt);
+                WithdrawResponse withdarwResponse = new WithdrawResponse(acctNum, amt);
+                msg.setPayload(withdarwResponse);
+        		this.writer.writeObject(msg);
+            } // end if WithdrawRequest
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -117,22 +126,46 @@ public class BankProtocol implements Protocol {
     	command = parsedCommand[0];
     	String name = parsedCommand[1];
     	
-        if (command.toLowerCase().matches("balance")) {
-            System.out.println("balance entered");
-            
-        } else if (command.toLowerCase().matches("deposit")) {
-            System.out.println("deposit entered");
-
-        } else if (command.toLowerCase().matches("withdraw")) {
-        	System.out.println("Withdrawals from the bank are not supported.");
-
-        } else if (command.toLowerCase().matches("validate")) {
-            System.out.println("validate entered");
-
-        } else {
-            System.out.println("Illegal input entered");
-        } // end else
+    	int acctNum = AccountManager.lookAcctByName(name);
+    	
+    	if (AccountManager.isAcctNumValid(acctNum)) {
+	        if (command.toLowerCase().matches("balance")) {
+	            System.out.println("balance: $"+AccountManager.processBal(acctNum));
+	        } else if (command.toLowerCase().matches("deposit")) {
+	            double amt = promptForDeposit(); 
+	    		if (amt > 0){
+	    			AccountManager.processDep(acctNum, amt);
+	    			System.out.println("$" + amt + " added to " + name + "'s account");
+	    		}
+	        } else if (command.toLowerCase().matches("withdraw")) {
+	        	System.out.println("Withdrawals from the bank are not supported.");
+	
+	        } else if (command.toLowerCase().matches("validate")) {
+	            System.out.println("validate entered");
+	
+	        } else {
+	            System.out.println("Illegal input entered");
+	        } // end else
+    	}
     }
+    
+    private double promptForDeposit() {
+    	BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
+        double amt = 0.0;
+        System.out.println("Enter the amount to deposit:");
+        
+        //  read the amount to deposit from the command-line
+        try {
+        	amt = Double.parseDouble(br.readLine());
+        } catch (IOException ioe) {
+           
+        } catch (NumberFormatException e) {
+        	
+        }
+        
+        return amt;
+	}
 
     /* Clean up all open streams. */
     public void close() throws IOException {
