@@ -181,7 +181,12 @@ public class TransactionManager {
     } // end readAtmCard
 
 	public void withdrawResponse(WithdrawResponse payload) {
-		System.out.println("$" + payload.getWithdrawAmount() + " dispensed");
+		double amt = payload.getWithdrawAmount();
+		if (amt != 0) {
+			System.out.println("$" + payload.getWithdrawAmount() + " dispensed");
+		} else {
+			System.out.println("Insufficient funds.");
+		}
 	}
 
 } // end class original.TransactionManager

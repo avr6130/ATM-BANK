@@ -115,11 +115,15 @@ public class BankProtocol implements Protocol {
 		
 		double amt = withdrawRequest.getWithdrawAmount();
 		int acctNum = withdrawRequest.getAccountNumber();
-		AccountManager.processWith(acctNum, amt);
-		WithdrawResponse withdarwResponse = new WithdrawResponse(acctNum, amt);
+		WithdrawResponse withdrawResponse;
+		if (AccountManager.processWith(acctNum, amt)) {
+			withdrawResponse = new WithdrawResponse(acctNum, amt);
+		} else {
+			withdrawResponse = new WithdrawResponse(acctNum, 0.0);
+		}
 		
 		msg.setSessionID(sessionId);
-		msg.setPayload(withdarwResponse);
+		msg.setPayload(withdrawResponse);
 		
 		return msg;
 	}
