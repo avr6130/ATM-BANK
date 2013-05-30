@@ -4,6 +4,7 @@ import messaging.AuthenticationRequest;
 import messaging.BalanceRequest;
 import messaging.BalanceResponse;
 import messaging.AuthenticationResponse;
+import messaging.WithdrawResponse;
 
 import java.io.File;
 import java.io.IOException;
@@ -178,5 +179,14 @@ public class TransactionManager {
         }
 
     } // end readAtmCard
+
+	public void withdrawResponse(WithdrawResponse payload) {
+		double amt = payload.getWithdrawAmount();
+		if (amt != 0) {
+			System.out.println("$" + payload.getWithdrawAmount() + " dispensed");
+		} else {
+			System.out.println("Insufficient funds.");
+		}
+	}
 
 } // end class original.TransactionManager
