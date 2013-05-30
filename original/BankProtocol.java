@@ -16,6 +16,7 @@ import messaging.BalanceResponse;
 import messaging.Message;
 import messaging.Payload;
 import messaging.SessionRequest;
+import messaging.SessionResponse;
 import messaging.WithdrawRequest;
 import messaging.WithdrawResponse;
 
@@ -26,7 +27,7 @@ import messaging.WithdrawResponse;
  */
 
 public class BankProtocol implements Protocol {
-
+	//XXX
 	private ObjectOutputStream writer;
 	private ObjectInputStream reader;
 	private HashMap<Integer, SessionInfo> sessionMap;
@@ -43,11 +44,14 @@ public class BankProtocol implements Protocol {
 
 	/* Process commands sent through the router. */
 	public void processRemoteCommands(String prompt) throws IOException {
-		Message msgObject;
+		Object msgObject;
 
 		try {
-			while ((msgObject = (Message) reader.readObject()) != null) {
-				processRemoteCommand(msgObject);
+			while ((msgObject = reader.readObject()) != null) {
+				
+				if (msgObject instanceof Message) {
+					this.processMessage((Message) msgObject);
+				}
 
 				// This was inserted here because the command line reader thread is
 				// currently blocked waiting for input.  That means if the Bank ever outputs
@@ -72,91 +76,69 @@ public class BankProtocol implements Protocol {
 		stdIn.close();
 	}
 
-	private Message generateAuthenticationResponse(Integer sessionId, AuthenticationRequest authRequest) {
-		Message msg = new Message();
+	private Payload generateAuthenticationResponse(Integer sessionId, AuthenticationRequest authRequest) {
 		boolean authenticated = this.accountManager.authenticateRequest(authRequest);
 
 		// Create the SessionResponse object and give it the account number and result of PIN validation.
-		AuthenticationResponse authenticationResponse = new AuthenticationResponse(authRequest.getAccountNumber(), authenticated);
-
-		msg.setSessionID(sessionId);
-		// Set the message payload to the authenticationResponse object
-		msg.setPayload(authenticationResponse);
-
-		return msg;
+		return new AuthenticationResponse(authRequest.getAccountNumber(), authenticated);
 	}
 
-	private Message generateSessionResponse(Integer sessionId, SessionRequest sessionRequest) {
-		Message msg = new Message();
+	private Payload generateSessionResponse(Integer sessionId, SessionRequest sessionRequest) {
 		PrivateKey key = null;  //TODO instantiate private key
-		SessionInfo sessionInfo = null;
+		SessionInfo sessionInfo = this.sessionMap.get(sessionId);
 
-		if (this.sessionMap.containsKey(sessionId)) {
-			System.err.println("Session request received with existing session ID.");
-			sessionInfo = this.sessionMap.get(sessionId); //TODO handle session request with existing session id
-		} else {
-			sessionId = Integer.valueOf(this.sessionIDcounter++);
+		if (sessionInfo == null) {
 			sessionInfo = new SessionInfo(sessionRequest.getAccountNumber(), key);
 			this.sessionMap.put(sessionId, sessionInfo);
 		}
-		msg.setSessionID(sessionId);
-		msg.setPayload(sessionRequest);
-
-		return msg;
+		return new SessionResponse(sessionRequest.getAccountNumber(), sessionInfo);
 	}
 	
-	private Message generateBalanceResponse(Integer sessionId, BalanceRequest balanceRequest) {
-		Message msg = new Message();
-		
-		BalanceResponse balanceResponse = new BalanceResponse(balanceRequest.getAccountNumber(), AccountManager.processBal(balanceRequest.getAccountNumber()));
-		
-		msg.setSessionID(sessionId);
-		msg.setPayload(balanceResponse);
-		
-		return msg;
+	private Payload generateBalanceResponse(Integer sessionId, BalanceRequest balanceRequest) {
+		return new BalanceResponse(balanceRequest.getAccountNumber(), AccountManager.processBal(balanceRequest.getAccountNumber()));
 	}
 	
-	private Message generateWithdrawResponse(Integer sessionId, WithdrawRequest withdrawRequest) {
-		Message msg = new Message();
-		
+	private Payload generateWithdrawResponse(Integer sessionId, WithdrawRequest withdrawRequest) {
 		double amt = withdrawRequest.getWithdrawAmount();
 		int acctNum = withdrawRequest.getAccountNumber();
 		AccountManager.processWith(acctNum, amt);
-		WithdrawResponse withdarwResponse = new WithdrawResponse(acctNum, amt);
-		
-		msg.setSessionID(sessionId);
-		msg.setPayload(withdarwResponse);
-		
-		return msg;
+		return new WithdrawResponse(acctNum, amt);
 	}
 
-	private synchronized void processRemoteCommand(Message messageObject) {
-		Integer sessionId = Integer.valueOf(messageObject.getSessionID());
-		Payload payload = messageObject.getPayload();
-		Message responseMessage = null;
+	private synchronized void processMessage(Message messageObject) {
+		Payload responsePayload = null;
+		Message responseMessage = new Message();
 		
-		if (payload instanceof SessionRequest) {
-			responseMessage = this.generateSessionResponse(sessionId, (SessionRequest) payload);
+		Integer sessionId = Integer.valueOf(messageObject.getSessionID());
+		//TODO decrypt payload
+		Payload requestPayload = messageObject.getPayload();
+		
+		if (requestPayload instanceof SessionRequest) {
+			// if the session ID does not exist, which it should not, assign a new ID
+			if (!this.sessionMap.containsKey(sessionId)) {
+				sessionId = Integer.valueOf(this.sessionIDcounter++);
+			}
+			responsePayload = this.generateSessionResponse(sessionId, (SessionRequest) requestPayload);
 		}
-		else if (payload instanceof AuthenticationRequest) {
-			responseMessage = this.generateAuthenticationResponse(sessionId, (AuthenticationRequest) payload);
+		else if (requestPayload instanceof AuthenticationRequest) {
+			responsePayload = this.generateAuthenticationResponse(sessionId, (AuthenticationRequest) requestPayload);
 		}
-		else if (payload instanceof BalanceRequest) {
-			responseMessage = this.generateBalanceResponse(sessionId, (BalanceRequest) payload);
+		else if (requestPayload instanceof BalanceRequest) {
+			responsePayload = this.generateBalanceResponse(sessionId, (BalanceRequest) requestPayload);
 		}
-		else if (payload instanceof WithdrawRequest) {
-			responseMessage = this.generateWithdrawResponse(sessionId, (WithdrawRequest) payload);
+		else if (requestPayload instanceof WithdrawRequest) {
+			responsePayload = this.generateWithdrawResponse(sessionId, (WithdrawRequest) requestPayload);
 		}
-
+		responseMessage.setSessionID(sessionId.intValue());
+		responseMessage.setPayload(responsePayload);  //TODO encrypt payload
 		try {
-			//TODO encrypted payload
 			this.writer.writeObject(responseMessage);
 		} catch (IOException e) {
 			e.printStackTrace();
 			e.getMessage();
-		} // end catch
+		}
 
-	} // end processRemoteCommand
+	}
 
 	/* Process user input. */
 	private synchronized void processLocalCommand(String command) {
