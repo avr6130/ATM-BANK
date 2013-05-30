@@ -141,9 +141,9 @@ public class ATMProtocol implements Protocol {
             // specific message type.
             Payload payload = msgObject.getPayload();
 
-            if (payload instanceof SessionResponse) {
-                atmTransactionManager.sessionResponse((SessionResponse) payload);
-            } // end SessionResponse
+            if (payload instanceof AuthenticationResponse) {
+                atmTransactionManager.authenticationResponse((AuthenticationResponse) payload);
+            } // end AuthenticationResponse
 
             else if (payload instanceof BalanceResponse) {
                 atmTransactionManager.balanceResponse((BalanceResponse) payload);

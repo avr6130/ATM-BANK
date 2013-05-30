@@ -3,7 +3,7 @@ package original;
 import messaging.AuthenticationRequest;
 import messaging.BalanceRequest;
 import messaging.BalanceResponse;
-import messaging.SessionResponse;
+import messaging.AuthenticationResponse;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,7 +24,7 @@ public class TransactionManager {
     private int numberOfFailedLoginAttempts;
 
     private AuthenticationRequest authenticationRequest;
-    private SessionResponse sessionResponse;
+    private AuthenticationResponse authenticationResponse;
     private BalanceRequest balanceRequest;
     private BalanceResponse balanceResponse;
 
@@ -108,14 +108,14 @@ public class TransactionManager {
 
     } // end authenticateSession
 
-    public void sessionResponse(SessionResponse sessionResponse) {
+    public void authenticationResponse(AuthenticationResponse authenticationResponse) {
 
         try {
             // Set the transaction state true or false
-            if (transactionActive = sessionResponse.isSessionValid() == true) {
+            if (transactionActive = authenticationResponse.isSessionValid() == true) {
 
                 // Set the active active account number
-                activeAccountNum = sessionResponse.getAccountNumber();
+                activeAccountNum = authenticationResponse.getAccountNumber();
 
                 System.out.println("User " + atmCard.getName() + " is Authorized");
 

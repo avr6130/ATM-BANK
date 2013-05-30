@@ -18,13 +18,13 @@ public class MessageHandler {
         }
 
         if (payload instanceof AuthenticationRequest) {
-            processSessionRequest((AuthenticationRequest) payload);
+            processAuthenticationRequest((AuthenticationRequest) payload);
         } else if (payload instanceof BalanceRequest) {
             processBalanceRequest((BalanceRequest) payload);
         } else if (payload instanceof WithdrawRequest) {
             processWithdrawRequest((WithdrawRequest) payload);
-        } else if (payload instanceof SessionResponse) {
-            processSessionResponse((SessionResponse) payload);
+        } else if (payload instanceof AuthenticationResponse) {
+            processAuthenticationResponse((AuthenticationResponse) payload);
         } else if (payload instanceof BalanceResponse) {
             processBalanceResponse((BalanceResponse) payload);
         } else if (payload instanceof WithdrawResponse) {
@@ -35,7 +35,7 @@ public class MessageHandler {
 
     }
 
-    public void processSessionRequest(AuthenticationRequest msg) {
+    public void processAuthenticationRequest(AuthenticationRequest msg) {
         //TODO
     } // end processSessionRequest
 
@@ -47,7 +47,7 @@ public class MessageHandler {
         //TODO
     }
 
-    private void processSessionResponse(SessionResponse payload) {
+    private void processAuthenticationResponse(AuthenticationResponse payload) {
     } // end processSessionResponse
 
     private void processWithdrawRequest(WithdrawRequest payload) {

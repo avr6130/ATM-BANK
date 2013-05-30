@@ -78,10 +78,10 @@ public class BankProtocol implements Protocol {
                 tempAcctNumber = payload.getAccountNumber();
 
                 // Create the SessionResponse object and give it the account number and result of PIN validation.
-                SessionResponse sessionResponse = new SessionResponse(messageObject.getPayload().getAccountNumber(), authenticated);
+                AuthenticationResponse authenticationResponse = new AuthenticationResponse(messageObject.getPayload().getAccountNumber(), authenticated);
 
-                // Set the message payload to the sessionResponse object
-                msg.setPayload(sessionResponse);
+                // Set the message payload to the authenticationResponse object
+                msg.setPayload(authenticationResponse);
 
                 // Send the message back to the ATM
                 writer.writeObject(msg);

@@ -6,11 +6,11 @@ package messaging;
  * Date: 5/24/13
  * Time: 9:19 PM
  */
-public class SessionResponse extends Payload {
+public class AuthenticationResponse extends Payload {
 
     private boolean sessionValid = false;
 
-    public SessionResponse(int accountNumber, boolean sessionValid) {
+    public AuthenticationResponse(int accountNumber, boolean sessionValid) {
         super(accountNumber);
         this.sessionValid = sessionValid;
     }
