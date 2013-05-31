@@ -144,10 +144,8 @@ public class AccountManager {
     	if (acct.getBal() >= amt) {
     		acct.setBal(acct.getBal() - amt);
     		acctMap.put(acctNo, acct);
-        	//System.out.println("$"+amt+ " dispensed");
         	return true;
     	} else {
-    		//System.out.println("insufficient funds");
     		return false;
     	}
     	
