@@ -136,32 +136,6 @@ public class TransactionManager {
         System.out.println("balance: $" + balanceResponse.getBalance());
     } // end processBalanceResponse
 
-    // Currently don't need this - Delete?
-//    public boolean requestBalance(String[] splitCmdString) {
-//
-//        boolean success = false;
-//
-//        try {
-//            // Read the original.ATM card for username and account number
-//            readAtmCard(splitCmdString);
-//
-//            if (atmCard == null) {
-//                success = false;
-//                System.out.println("requestBalance:problem with ATM card.")
-//            } // end if atmCard == null
-//            else {
-//                // Send a balance request to the back
-//                balanceRequest = new BalanceRequest(atmCard.getAccountNumber());
-//                success = true;
-//            } // end else atmCard not null
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-//        } // end catch
-//        return success;  //To change body of created methods use File | Settings | File Templates.
-//
-//    }  // end requestBalance
-
     private void readAtmCard(String[] splitCmdString) throws IOException {
 
         // Prepare and read the original.ATM card for the requested username
@@ -183,7 +157,7 @@ public class TransactionManager {
 	public void withdrawResponse(WithdrawResponse payload) {
 		double amt = payload.getWithdrawAmount();
 		if (amt != 0) {
-			System.out.println("$" + payload.getWithdrawAmount() + " dispensed");
+			System.out.println("$" + amt + " dispensed");
 		} else {
 			System.out.println("Insufficient funds.");
 		}

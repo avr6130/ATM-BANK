@@ -36,14 +36,6 @@ public class ATMProtocol implements Protocol {
         stdIn.close();
     }
 
-//    /* Process a remote command. */
-//    private synchronized void processRemoteCommand(String command) {
-//        boolean authenticated;
-//
-//        messageHandler.processMessage(command);
-//
-//    }
-
     private void processBeginSession(String[] splitCmdString) throws IOException {
         Message msg = new Message();
 
