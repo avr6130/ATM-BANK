@@ -59,7 +59,13 @@ public class ATMProtocol implements Protocol {
         } // end catch
     } // end processBeginSession()
 
-    private void processRequestBalance(String[] splitCmdString) throws IOException {
+    private void processRequestBalance() throws IOException {
+    	
+    	if (!atmTransactionManager.transactionActive()) {
+            System.out.println("No user logged in");
+            return;
+        }
+    	
         Message msg = new Message();
         BalanceRequest balanceRequest = new BalanceRequest(atmTransactionManager.getActiveAccountNum());
 
@@ -97,12 +103,7 @@ public class ATMProtocol implements Protocol {
         } // end if begin-session request
 
         else if (splitCmdString[0].toLowerCase().matches("balance")) {
-            if (!atmTransactionManager.transactionActive()) {
-                System.out.println("Unauthorized");
-            } // end if !transaction.isActive
-            else {
-                processRequestBalance(splitCmdString);
-            } // end else transaction is active
+        	processRequestBalance();
 
         } // end else if balance request
 
@@ -124,7 +125,7 @@ public class ATMProtocol implements Protocol {
     private void processRequestWithdraw() {
     	
     	if (!atmTransactionManager.transactionActive()) {
-            System.out.println("Unauthorized");
+            System.out.println("No user logged in");
             return;
         }
     	
