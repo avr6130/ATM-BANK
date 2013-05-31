@@ -122,6 +122,12 @@ public class ATMProtocol implements Protocol {
     } // end processCommand
 
     private void processRequestWithdraw() {
+    	
+    	if (!atmTransactionManager.transactionActive()) {
+            System.out.println("Unauthorized");
+            return;
+        }
+    	
 		double amt = promptForWithdraw();
 		if (amt > 0) {
 			Message msg = new Message();

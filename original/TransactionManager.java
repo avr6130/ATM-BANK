@@ -34,7 +34,9 @@ public class TransactionManager {
 
     public void endCurrentTransaction() {
         transactionActive = false;
-        System.out.println(atmCard.getName() + " logged out.");
+        if(atmCard != null) {
+        	System.out.println(atmCard.getName() + " logged out.");
+        }
     } // end setTransactionActive
 
     public int getActiveAccountNum() {
