@@ -1,13 +1,16 @@
 package original;
 
-import messaging.AuthenticationRequest;
-import messaging.BalanceRequest;
-import messaging.BalanceResponse;
-import messaging.AuthenticationResponse;
-import messaging.WithdrawResponse;
-
 import java.io.File;
 import java.io.IOException;
+import java.security.Key;
+
+import crypto.Keygen;
+
+import messaging.AuthenticationRequest;
+import messaging.AuthenticationResponse;
+import messaging.BalanceRequest;
+import messaging.BalanceResponse;
+import messaging.WithdrawResponse;
 
 /**
  * Created with IntelliJ IDEA.
@@ -28,8 +31,14 @@ public class TransactionManager {
     private AuthenticationResponse authenticationResponse;
     private BalanceRequest balanceRequest;
     private BalanceResponse balanceResponse;
+    private Key sessionKey;
 
     public TransactionManager() {
+    	this.sessionKey = (Key) Keygen.generateKey("AES", 128);
+    }
+    
+    public Key getSessionKey() {
+    	return this.sessionKey;
     }
 
     public void endCurrentTransaction() {

@@ -6,16 +6,22 @@ import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.security.Key;
 
 import messaging.AuthenticationRequest;
 import messaging.AuthenticationResponse;
 import messaging.BalanceRequest;
 import messaging.BalanceResponse;
 import messaging.Message;
-import messaging.MessageHandler;
 import messaging.Payload;
 import messaging.WithdrawRequest;
 import messaging.WithdrawResponse;
+import authority.G2Constants;
+import crypto.CryptoAES;
+import crypto.keyexchange.KeyExchangeSupport;
+import crypto.keyexchange.KeyExchangeSupport.AppMode;
+import crypto.keyexchange.messages.CertificateResponseMessage;
+import crypto.keyexchange.messages.KeyExchangeMessage;
 
 /**
  * An ATMProtocol processes local splitStr[0]s sent to the ATM and writes to or reads
@@ -27,14 +33,15 @@ public class ATMProtocol implements Protocol {
 
     private ObjectOutputStream writer;
     private ObjectInputStream reader;
-    private TransactionManager atmTransactionManager = new TransactionManager();
+    private TransactionManager atmTransactionManager;
     private AuthenticationRequest authenticationRequest;
-    private MessageHandler messageHandler = new MessageHandler();
+    private KeyExchangeSupport keyExchangeSupport;
 
     public ATMProtocol(Socket socket) throws IOException {
         writer = new ObjectOutputStream(socket.getOutputStream());
         reader = new ObjectInputStream(socket.getInputStream());
-    }
+		keyExchangeSupport = new KeyExchangeSupport(AppMode.ATM);
+}
 
     /* Continue to read input until terminated. */
     public void processLocalCommands(BufferedReader stdIn, String prompt) throws IOException {
@@ -92,11 +99,13 @@ public class ATMProtocol implements Protocol {
     private Message generateAuthenticationRequest(String[] splitCmdString) throws IOException {
     	
     	Message msg = null;
-    	if (atmTransactionManager.transactionActive()) {
+    	if (atmTransactionManager != null && atmTransactionManager.transactionActive()) {
             System.out.println("Transaction currently in progress.  Please end-session before beginning a new session.");
             return msg;
         } // end if transactionActive()
-        
+    	
+    	// create new transaction manager
+    	atmTransactionManager = new TransactionManager();
     	authenticationRequest = atmTransactionManager.authenticateSession(splitCmdString);
 
     	if (authenticationRequest == null) {
@@ -104,7 +113,7 @@ public class ATMProtocol implements Protocol {
     		return msg;
     	} else {
     		msg = new Message();
-    		msg.setPayload(authenticationRequest);
+    		msg.setSealedPayload(CryptoAES.encrypt(atmTransactionManager.getSessionKey(), authenticationRequest));
     		return msg;
     	}
  
@@ -123,7 +132,7 @@ public class ATMProtocol implements Protocol {
 			msg = new Message();
 	        WithdrawRequest withdrawRequest = new WithdrawRequest(atmTransactionManager.getActiveAccountNum(), amt);
 
-	         msg.setPayload(withdrawRequest);
+    		msg.setSealedPayload(CryptoAES.encrypt(atmTransactionManager.getSessionKey(), withdrawRequest));
 	         return msg;
 		}
 		return msg;
@@ -139,30 +148,24 @@ public class ATMProtocol implements Protocol {
 		BalanceRequest balanceRequest = new BalanceRequest(atmTransactionManager.getActiveAccountNum());
 		
 		msg = new Message();
-		msg.setPayload(balanceRequest);
+		msg.setSealedPayload(CryptoAES.encrypt(atmTransactionManager.getSessionKey(), balanceRequest));
 		return msg;
 	}
 
 	public void processRemoteCommands() throws IOException {
-        Message msgObject;
+        Object msgObject;
 
         try {
-            msgObject = (Message) reader.readObject();
+            msgObject = (Object) reader.readObject();
+            
+            if (msgObject instanceof Message) {
+				this.processMessage((Message) msgObject);
+			}
+			else if(msgObject instanceof KeyExchangeMessage) {
+				this.processMessage((KeyExchangeMessage) msgObject);
+			}
 
-            // Pull the payload out of the generic message.  The payload is the
-            // specific message type.
-            Payload payload = msgObject.getPayload();
-
-            if (payload instanceof AuthenticationResponse) {
-                atmTransactionManager.authenticationResponse((AuthenticationResponse) payload);
-            } // end AuthenticationResponse
-
-            else if (payload instanceof BalanceResponse) {
-                atmTransactionManager.balanceResponse((BalanceResponse) payload);
-            } // end BalanceResponse
-            else if (payload instanceof WithdrawResponse) {
-            	atmTransactionManager.withdrawResponse((WithdrawResponse) payload);
-            }
+            
 
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
@@ -170,6 +173,39 @@ public class ATMProtocol implements Protocol {
 
     }
     
+	private void processMessage(KeyExchangeMessage msgObject) {
+
+		if (msgObject.mType == KeyExchangeMessage.MessageType.CertificateResponse) {
+			
+			Key bankPublicKey = this.keyExchangeSupport.validateCertificate(((CertificateResponseMessage) msgObject).getBankCert(), G2Constants.BANK_NAME);
+			if (bankPublicKey != null) {
+				
+				this.keyExchangeSupport.encryptSecret(secret, bankPublicKey);
+			}
+		}
+		else {
+			//TODO bad message type
+			return;
+		}
+	}
+
+	private void processMessage(Message msgObject) {
+		// Pull the payload out of the generic message.  The payload is the
+        // specific message type.
+        Payload payload = CryptoAES.decrypt(this.atmTransactionManager.getSessionKey(), msgObject.getSealedPayload());
+
+        if (payload instanceof AuthenticationResponse) {
+            atmTransactionManager.authenticationResponse((AuthenticationResponse) payload);
+        } // end AuthenticationResponse
+
+        else if (payload instanceof BalanceResponse) {
+            atmTransactionManager.balanceResponse((BalanceResponse) payload);
+        } // end BalanceResponse
+        else if (payload instanceof WithdrawResponse) {
+        	atmTransactionManager.withdrawResponse((WithdrawResponse) payload);
+        }		
+	}
+
 	private double promptForWithdraw() {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 

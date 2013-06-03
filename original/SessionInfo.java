@@ -1,14 +1,14 @@
 package original;
 
-import java.security.PrivateKey;
+import java.security.Key;
 
 public class SessionInfo {
 	
 	private int accountNumber = 0;
 	
-	private PrivateKey key = null;
+	private Key key = null;
 	
-	public SessionInfo(int accountNumber, PrivateKey key) {
+	public SessionInfo(int accountNumber, Key key) {
 		this.accountNumber = accountNumber;
 		this.key = key;
 	}
@@ -17,7 +17,7 @@ public class SessionInfo {
 		return this.accountNumber;
 	}
 	
-	public PrivateKey getKey() {
+	public Key getKey() {
 		return this.key;
 	}
 }

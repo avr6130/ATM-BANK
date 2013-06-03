@@ -1,21 +1,20 @@
 package crypto.keyexchange.messages;
 
 import java.io.Serializable;
-
-import crypto.Certificate;
+import java.security.SignedObject;
 
 public class CertificateResponseMessage extends KeyExchangeMessage implements Serializable {
 
-	private Certificate bankCert;
+	private SignedObject bankCert;
 	private int sessionId;
 
-	public CertificateResponseMessage(Certificate bankCert, int sessionId) {
+	public CertificateResponseMessage(SignedObject bankCert, int sessionId) {
 		super(KeyExchangeMessage.MessageType.CertificateResponse);
 		this.bankCert = bankCert;
 		this.sessionId = sessionId;
 	}
 
-	public Certificate getBankCert() {
+	public SignedObject getBankCert() {
 		return bankCert;
 	}
 
