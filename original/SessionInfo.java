@@ -21,7 +21,7 @@ public class SessionInfo {
 	public SessionInfo(int accountNumber, Key key) {
 		this.accountNumber = accountNumber;
 		this.key = key;
-		Timer timeoutTimer = new Timer();
+		timeoutTimer = new Timer();
 		
 		long delay = Long.parseLong(PropertiesFile.getProperty(PropertiesFile.SESSION_TIMEOUT, DEFAULT_SESSION_TIMEOUT)) 
 				* G2Constants.SEC_TO_MSEC;

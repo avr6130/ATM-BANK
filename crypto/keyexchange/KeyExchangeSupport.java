@@ -1,7 +1,6 @@
 package crypto.keyexchange;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -15,10 +14,9 @@ import java.security.SignedObject;
 
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
-import javax.crypto.CipherOutputStream;
+import javax.crypto.SealedObject;
 
 import original.PropertiesFile;
-
 import authority.G2Constants;
 import crypto.Certificate;
 import crypto.RSAKeyInfo;
@@ -135,37 +133,30 @@ public class KeyExchangeSupport {
 	 * @param bankPublicKey
 	 * @return the encrypted bytes of the key parameter or an empty array if any error occurs
 	 */
-	public byte[] encryptSecret(Serializable secret, PublicKey bankPublicKey) {
+	public SealedObject encryptSecret(Serializable secret, PublicKey bankPublicKey) {
 		if (this.mode != AppMode.ATM) {
-			return new byte[0];
+//			return new byte[0];
+			return null;
 		}
 		
-		ObjectOutputStream oos = null;
+//		ObjectOutputStream oos = null;
 		try {
 			Cipher rsaCipher = Cipher.getInstance(KeyExchangeSupport.pkAlgorithm);
 			rsaCipher.init(Cipher.ENCRYPT_MODE, bankPublicKey);
-			ByteArrayOutputStream baos = new ByteArrayOutputStream(4096);
-			CipherOutputStream cos = new CipherOutputStream(baos, rsaCipher);
-			oos = new ObjectOutputStream(cos);
-			oos.writeObject(secret);
-			oos.flush();
-			return baos.toByteArray();
+//			ByteArrayOutputStream baos = new ByteArrayOutputStream(4096);
+//			CipherOutputStream cos = new CipherOutputStream(baos, rsaCipher);
+//			oos = new ObjectOutputStream(cos);
+//			oos.writeObject(secret);
+//			oos.flush();
+//			return baos.toByteArray();
+			SealedObject so = new SealedObject(secret, rsaCipher);
+			return so;
 		} catch (Exception e) {
 			if (PropertiesFile.isDebugMode()) {
 				e.printStackTrace();
 			}
-		} finally {
-			if (oos != null) {
-				try {
-					oos.close();
-				} catch (IOException e) {
-					if (PropertiesFile.isDebugMode()) {
-						e.printStackTrace();
-					}
-				}
-			}
 		}
-		return new byte[0];
+		return null;
 	}
 	
 	/**
@@ -175,7 +166,7 @@ public class KeyExchangeSupport {
 	 * @param secretBytes
 	 * @return the decrypted secret object or null if an error occurs
 	 */
-	public Object decryptSecret(byte[] secretBytes) {
+	public Object decryptSecret(SealedObject so) {
 		if (this.mode != AppMode.BANK) {
 			return null;
 		}
@@ -183,11 +174,17 @@ public class KeyExchangeSupport {
 		try {
 			Cipher rsaCipher = Cipher.getInstance(KeyExchangeSupport.pkAlgorithm);
 			rsaCipher.init(Cipher.DECRYPT_MODE, this.bankPrivate);
-			ByteArrayInputStream bais = new ByteArrayInputStream(secretBytes);
-			CipherInputStream cis = new CipherInputStream(bais, rsaCipher);
-			ois = new ObjectInputStream(cis);
+//			ByteArrayInputStream bais = new ByteArrayInputStream(secretBytes);
+//			CipherInputStream cis = new CipherInputStream(bais, rsaCipher);
+//			ois = new ObjectInputStream(cis);
 			
-			return ois.readObject();
+			Object obj = so.getObject(rsaCipher);
+			
+			if (PropertiesFile.isDebugMode()) {
+				System.out.println("sealed object had obj=" + obj);
+			}
+			
+			return obj;
 		} catch (Exception e) {
 			if (PropertiesFile.isDebugMode()) {
 				e.printStackTrace();

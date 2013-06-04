@@ -8,6 +8,8 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.security.PublicKey;
 
+import javax.crypto.SealedObject;
+
 import messaging.AuthenticationRequest;
 import messaging.AuthenticationResponse;
 import messaging.BalanceRequest;
@@ -183,9 +185,9 @@ public class ATMProtocol implements Protocol {
 				
 				this.transactionManager.setSessionId(((CertificateResponseMessage) msgObject).getSessionId());
 				SecretExchangePayload secret = new SecretExchangePayload(this.transactionManager.getActiveAccountNum(), this.transactionManager.getSessionId(), this.transactionManager.getSessionKey());
-				byte[] secretBytes = this.keyExchangeSupport.encryptSecret(secret, bankPublicKey);
+				SealedObject so = this.keyExchangeSupport.encryptSecret(secret, bankPublicKey);
 				try {
-					this.writer.writeObject(new SecretExchangeMessage(secretBytes, this.transactionManager.getSessionId()));
+					this.writer.writeObject(new SecretExchangeMessage(so, this.transactionManager.getSessionId()));
 					if (PropertiesFile.isDebugMode()) {
 						System.out.println("Secure session created.");
 					}

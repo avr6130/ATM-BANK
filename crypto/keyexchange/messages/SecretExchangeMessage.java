@@ -1,18 +1,20 @@
 package crypto.keyexchange.messages;
 
+import javax.crypto.SealedObject;
+
 public class SecretExchangeMessage extends KeyExchangeMessage {
 
-	private byte[] secret;
+	private SealedObject so;
 	private int sessionId;
 
-	public SecretExchangeMessage(byte[] secret, int sessionId) {
+	public SecretExchangeMessage(SealedObject so, int sessionId) {
 		super(KeyExchangeMessage.MessageType.SecretExchange);
-		this.secret = secret;
+		this.so = so;
 		this.sessionId = sessionId;
 	}
 
-	public byte[] getSecret() {
-		return secret;
+	public SealedObject getSecret() {
+		return so;
 	}
 	
 	public int getSessionId() {
