@@ -38,11 +38,6 @@ public class AccountManager {
 
             createAtmCardFile(newAcct.getAtmCard());
 
-            // Debug
-            if (PropertiesFile.isDebugMode()) {
-            	System.out.println(newAcct);
-            }
-
             // Manipulate account variables
             accountNumber++;
             initialPin += 2578;
