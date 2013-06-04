@@ -12,7 +12,7 @@ import javax.crypto.SealedObject;
  */
 public class Message implements Serializable {
 
-    private int sessionId = 0;
+	private int sessionId = 0;
 
     private SealedObject sealedPayload = null;
 
@@ -34,4 +34,10 @@ public class Message implements Serializable {
     public void setSealedPayload(SealedObject sealedPayload) {
         this.sealedPayload = sealedPayload;
     }
+    
+    @Override
+	public String toString() {
+		return "Message [sessionId=" + sessionId + ", sealedPayload="
+				+ sealedPayload + "]";
+	}
 }

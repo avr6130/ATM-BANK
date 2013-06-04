@@ -8,10 +8,12 @@ import java.net.Socket;
 
 public class Router {
 
-    final static int BUF_LENGTH = 1024;
+    final static int BUF_LENGTH = 4096;
 
     public static void main(String[] args) {
-
+    	//Initialize properties
+    	PropertiesFile.getProperties();
+    	
         if (args.length < 2) {
             System.out.println("Usage: java Router <Bank port> <ATM port>");
             System.exit(1);
@@ -53,7 +55,7 @@ public class Router {
             System.exit(1);
         }
 
-        byte buf[] = new byte[BUF_LENGTH];
+        byte buf[];
         int len;
 
         InputStream atmSocketInputStream = null;
@@ -77,12 +79,14 @@ public class Router {
                 }
 
                 if ((len = bankSocketInputStream.available()) > 0) {
+                	buf = new byte[len];
                     bankSocketInputStream.read(buf,0,len);
                     atmSocketOutputStream.write(buf,0,len);
                     System.out.println("sent " + len + " bytes from Bank to ATM");
                 }
 
                 if ((len = atmSocketInputStream.available()) > 0) {
+                	buf = new byte[len];
                     atmSocketInputStream.read(buf,0,len);
                     bankSocketOutputStream.write(buf,0,len);
                     bankSocketOutputStream.flush();

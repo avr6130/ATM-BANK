@@ -90,18 +90,24 @@ public class BankProtocol implements Protocol {
 				SessionInfo sessionInfo = new SessionInfo(payload.getAccountNumber(), payload.getSessionKey());
 				this.sessionMap.put(sessionId, sessionInfo);
 			} else {
-				System.err.println("Session ID not valid");//TODO log error?
+				if (PropertiesFile.isDebugMode()) {
+					System.err.println("processMessage: Session ID not valid for msgObject=" + msgObject);
+				}
 			}
 			
 		}
 		else {
-			//TODO bad message type
+			if (PropertiesFile.isDebugMode()) {
+				System.err.println("processMessage: Bad msgObject=" + msgObject);
+			}
 		}
 		if (responseMsg != null) {
 			try {
 				this.writer.writeObject(responseMsg);
 			} catch (IOException e) {
-				e.printStackTrace();
+				if (PropertiesFile.isDebugMode()) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}
@@ -150,7 +156,10 @@ public class BankProtocol implements Protocol {
 		
 		// the bank does not have record of the message's sessionId
 		if (sessionInfo == null) {
-			//TODO log error/respond to message
+			if (PropertiesFile.isDebugMode()) {
+				System.err.println("processMessage: SessionInfo does not exist for sessionId=" + sessionId);
+			}
+			//TODO respond to message?
 			return;
 		}
 		
@@ -158,7 +167,10 @@ public class BankProtocol implements Protocol {
 		Payload requestPayload = CryptoAES.decrypt(sessionInfo.getKey(), messageObject.getSealedPayload());
 		
 		if (requestPayload == null || requestPayload.getAccountNumber() != sessionInfo.getAccountNumber()) {
-			//TODO log error/respond to message
+			if (PropertiesFile.isDebugMode()) {
+				System.err.println("processMessage: Bad requestPayload=" + requestPayload);
+			}
+			//TODO respond to message?
 			return;
 		}
 		// process message
@@ -179,10 +191,10 @@ public class BankProtocol implements Protocol {
 		try {
 			this.writer.writeObject(responseMessage);
 		} catch (IOException e) {
-			e.printStackTrace();
-			e.getMessage();
+			if (PropertiesFile.isDebugMode()) {
+				e.printStackTrace();
+			}
 		}
-
 	}
 
 	private Payload generateTerminationResponse(Integer sessionId) {

@@ -18,4 +18,9 @@ public abstract class KeyExchangeMessage implements Serializable {
 		return mType;
 	}
 
+	@Override
+	public String toString() {
+		return "KeyExchangeMessage [mType=" + mType + "]";
+	}
+
 }

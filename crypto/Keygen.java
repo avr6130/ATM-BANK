@@ -12,6 +12,8 @@ import java.security.spec.RSAPublicKeySpec;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 
+import original.PropertiesFile;
+
 public class Keygen {
 
 	/**
@@ -102,7 +104,7 @@ public class Keygen {
 			return keyGen.generateKey();
 						
 		} catch (Exception e) {
-			if (System.getProperty("DEBUG_MODE") != null) {
+			if (PropertiesFile.isDebugMode()) {
 				e.printStackTrace();
 			}
 			return null;
@@ -129,7 +131,7 @@ public class Keygen {
 			return new RSAKeyPairInfo(pub.getModulus(),pub.getPublicExponent(), priv.getModulus(),priv.getPrivateExponent());
 			
 		} catch (Exception e) {
-			if (System.getProperty("DEBUG_MODE") != null) {
+			if (PropertiesFile.isDebugMode()) {
 				e.printStackTrace();
 			}
 			return null;

@@ -5,19 +5,19 @@ import java.io.*;
 
 public class Account implements Serializable {
     private String name;
-    private int acctno;
-    private int pinno;
+    private int acountNumber;
+    private int pin;
     private double balance;
     private AtmCardClass atmCard;
     private long nextValidLoginTime = System.currentTimeMillis();
     private short currentNumOfFailedLoginAttempts = 0;
 
-    Account(String Name, int acct, int pin, double bal) {
-        name = Name;
-        acctno = acct;
-        pinno = pin;
-        balance = bal;
-        atmCard = new AtmCardClass(name, acctno);
+    Account(String name, int accountNumber, int pin, double balance) {
+        this.name = name;
+        this.acountNumber = accountNumber;
+        this.pin = pin;
+        this.balance = balance;
+        atmCard = new AtmCardClass(this.name, this.acountNumber);
     }
 
     public void incrementCurrentNumOfFailedLoginAttempts() {
@@ -40,20 +40,16 @@ public class Account implements Serializable {
         return nextValidLoginTime;
     }
 
-    public void print() {
-        System.out.println("Acct# " + acctno + "\n" + "Pin# " + pinno + "\n" + "Name " + name + "\n" + "Acct Bal " + balance + "\n");
-    }
-
     public String getName() {
         return name;
     }
 
     public int getID() {
-        return acctno;
+        return acountNumber;
     }
 
     public int getPin() {
-        return pinno;
+        return pin;
     }
 
     public double getBal() {
@@ -63,22 +59,19 @@ public class Account implements Serializable {
     public AtmCardClass getAtmCard() {
         return atmCard;
     }
-
-    public void setName(String Name) {
-        name = new String(Name);
+    
+    public void setBalance(double balance) {
+    	this.balance = balance;
     }
 
-    public void setId(int ID) {
-        acctno = ID;
-    }
-
-    public void setPin(int Pin) {
-        pinno = Pin;
-    }
-
-    public void setBal(double Bal) {
-        balance = Bal;
-    }
-
-
+	@Override
+	public String toString() {
+		return "Account [name=" + name + ", acountNumber=" + acountNumber
+				+ ", pin=" + pin + ", balance=" + balance + ", atmCard="
+				+ atmCard + ", nextValidLoginTime=" + nextValidLoginTime
+				+ ", currentNumOfFailedLoginAttempts="
+				+ currentNumOfFailedLoginAttempts + "]";
+	}
+    
+    
 }

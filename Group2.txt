@@ -1,0 +1,4 @@
+DebugMode=true
+SessionTimeout=60
+LoginAttempts=3
+LockoutDuration=60

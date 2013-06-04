@@ -4,9 +4,11 @@ import java.security.Key;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import authority.G2Constants;
+
 public class SessionInfo {
 	
-	private static final long TIMEOUT_DELAY = 60000L;
+	private static final String DEFAULT_SESSION_TIMEOUT = "60";
 	
 	private int accountNumber = 0;
 	
@@ -21,6 +23,8 @@ public class SessionInfo {
 		this.key = key;
 		Timer timeoutTimer = new Timer();
 		
+		long delay = Long.parseLong(PropertiesFile.getProperty(PropertiesFile.SESSION_TIMEOUT, DEFAULT_SESSION_TIMEOUT)) 
+				* G2Constants.SEC_TO_MSEC;
 		// set a session timeout to invalidate the session
 		timeoutTimer.schedule(new TimerTask() {
 			
@@ -28,7 +32,7 @@ public class SessionInfo {
 			public void run() {
 				SessionInfo.this.valid = false;
 			}
-		}, TIMEOUT_DELAY);
+		}, delay);
 	}
 	
 	public int getAccountNumber() {

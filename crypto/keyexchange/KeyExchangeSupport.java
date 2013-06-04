@@ -9,12 +9,15 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.Security;
 import java.security.Signature;
 import java.security.SignedObject;
 
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
+
+import original.PropertiesFile;
 
 import authority.G2Constants;
 import crypto.Certificate;
@@ -27,7 +30,7 @@ public class KeyExchangeSupport {
 		ATM(), BANK();
 	}
 
-	private static final String pkAlgorithm = "RSA/CBC/PKCS5Padding";
+	private static final String pkAlgorithm = "RSA/ECB/PKCS1Padding";
 	
 	private final AppMode mode;
 	
@@ -47,6 +50,10 @@ public class KeyExchangeSupport {
 	private final SignedObject bankCertificate;
 	
 	public KeyExchangeSupport(AppMode mode) {
+		if (PropertiesFile.isDebugMode()) {
+			System.out.println("Security Providers=" + Security.getProviders());
+		}
+		
 		this.mode = mode;
 		
 		if (mode == AppMode.ATM) {
@@ -69,7 +76,9 @@ public class KeyExchangeSupport {
 	 */
 	public SignedObject getBankCertificate() {
 		if (this.mode == AppMode.BANK) {
-			System.out.println("getBankCertificate=" + this.bankCertificate);  //XXX
+			if (PropertiesFile.isDebugMode()) {
+				System.out.println("getBankCertificate=" + this.bankCertificate);
+			}
 			return this.bankCertificate;
 		}
 		
@@ -135,22 +144,28 @@ public class KeyExchangeSupport {
 		try {
 			Cipher rsaCipher = Cipher.getInstance(KeyExchangeSupport.pkAlgorithm);
 			rsaCipher.init(Cipher.ENCRYPT_MODE, bankPublicKey);
-			ByteArrayOutputStream baos = new ByteArrayOutputStream(1000);
+			ByteArrayOutputStream baos = new ByteArrayOutputStream(4096);
 			CipherOutputStream cos = new CipherOutputStream(baos, rsaCipher);
 			oos = new ObjectOutputStream(cos);
 			oos.writeObject(secret);
+			oos.flush();
 			return baos.toByteArray();
 		} catch (Exception e) {
-			return new byte[0];
+			if (PropertiesFile.isDebugMode()) {
+				e.printStackTrace();
+			}
 		} finally {
 			if (oos != null) {
 				try {
 					oos.close();
 				} catch (IOException e) {
-					e.printStackTrace();
+					if (PropertiesFile.isDebugMode()) {
+						e.printStackTrace();
+					}
 				}
 			}
 		}
+		return new byte[0];
 	}
 	
 	/**
@@ -174,16 +189,21 @@ public class KeyExchangeSupport {
 			
 			return ois.readObject();
 		} catch (Exception e) {
-			return null;
+			if (PropertiesFile.isDebugMode()) {
+				e.printStackTrace();
+			}
 		} finally {
 			if (ois != null) {
 				try {
 					ois.close();
 				} catch (IOException e) {
-					e.printStackTrace();
+					if (PropertiesFile.isDebugMode()) {
+						e.printStackTrace();
+					}
 				}
 			}
 		}
+		return null;
 	}
 
 	private static boolean pubKeysEqual(PublicKey key1, PublicKey key2) {
@@ -217,14 +237,17 @@ public class KeyExchangeSupport {
 			else if (!(key instanceof RSAKeyInfo) &&
 					!(key instanceof RSAKeyPairInfo) &&
 					!(key instanceof PublicKey) &&
-					!(key instanceof PrivateKey)) {
+					!(key instanceof PrivateKey) &&
+					!(key instanceof SignedObject)) {
 				return null;
 			}
 			
 			return (Serializable) key;
 			
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (PropertiesFile.isDebugMode()) {
+				e.printStackTrace();
+			}
 			return null;
 		}
 	}

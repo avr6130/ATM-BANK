@@ -20,4 +20,9 @@ public abstract class Payload implements Serializable {
         return accountNumber;
     }
 
+	@Override
+	public String toString() {
+		return "Payload [accountNumber=" + accountNumber + "]";
+	}
+
 }

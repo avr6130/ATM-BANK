@@ -14,9 +14,11 @@ public class Bank {
     private static AccountManager accountManager = new AccountManager();
 
     public static void main(String[] args) {
-
-
-        open(); //Initialize user accounts
+    	//Initialize properties
+    	PropertiesFile.getProperties();
+    	
+    	//Initialize user accounts
+        open(); 
 
         if (args.length != 1) {
             System.out.println("Usage: java Bank <Bank-port>");
@@ -26,25 +28,20 @@ public class Bank {
         int bankPort = Integer.parseInt(args[0]);
 
         try {
-
             // Check to see if the file that contains the accounts exists.
             // If it doesn't then create the accounts and write them to the file.
             // The files used for ATM cards are also created within the AccountManager.
-            if (!new File("accountsFile").isFile()) {
-
+            if (Boolean.getBoolean(PropertiesFile.VM_PROP_BUILD_EXT_DATA)) {
                 // Set up initial accounts with account names and balances
                 accountManager.createAccount("Alice", 100.00);
                 accountManager.createAccount("Bob", 100.00);
                 accountManager.createAccount("Carol", 0.00);
 
                 accountManager.storeAllAccounts();
-
-            } // end if File
+            }
             else {
                 accountManager.retrieveAllAccounts();
-            } // end else
-
-            accountManager.printAllAccounts();
+            }
 
             /* Connect to port */
             Socket socket = new Socket("localhost", bankPort);
@@ -60,7 +57,6 @@ public class Bank {
                         bankProtocol.processLocalCommands(stdIn, prompt);
                     } catch (IOException e) {
                         System.out.println("Failed to process user input.");
-                        e.getMessage();
                         e.printStackTrace();
                         System.exit(0);
                     }
@@ -74,7 +70,6 @@ public class Bank {
                         bankProtocol.processRemoteCommands(prompt);
                     } catch (IOException e) {
                         System.out.println("Failed to process remote input.");
-                        e.getMessage();
                         e.printStackTrace();
                         System.exit(0);
                     }

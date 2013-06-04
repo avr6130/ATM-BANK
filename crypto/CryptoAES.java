@@ -1,32 +1,22 @@
 package crypto;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.math.BigInteger;
-import java.security.InvalidKeyException;
 import java.security.Key;
-import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.security.spec.RSAPublicKeySpec;
 
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SealedObject;
 import javax.crypto.spec.IvParameterSpec;
 
+import messaging.BalanceRequest;
 import messaging.Payload;
-import messaging.SessionRequest;
-import messaging.SessionResponse;
+import original.PropertiesFile;
 
 public class CryptoAES {
 
@@ -58,7 +48,7 @@ public class CryptoAES {
 
 			myKey = (Key) Keygen.generateKey(algorithmName, keySize);
 			
-			SessionRequest msg = new SessionRequest(0);
+			BalanceRequest msg = new BalanceRequest(0);
 			
 			SealedObject so = CryptoAES.encrypt(myKey, msg);
 			
@@ -109,7 +99,7 @@ public class CryptoAES {
 			encCipher.init(Cipher.ENCRYPT_MODE,encKey,iv);
 			so = new SealedObject(msg, encCipher);
 		} catch (Exception e) {
-			if (System.getProperty("DEBUG_MODE") != null) {
+			if (PropertiesFile.isDebugMode()) {
 				e.printStackTrace();
 			}
 			return null;

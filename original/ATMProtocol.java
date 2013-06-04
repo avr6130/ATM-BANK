@@ -74,7 +74,9 @@ public class ATMProtocol implements Protocol {
 			this.transactionManager = new TransactionManager();
 			requestPayload = this.generateAuthenticationRequest(splitCmdString);
 			if (requestPayload == null) {
-				//TODO log error
+				if (PropertiesFile.isDebugMode()) {
+					System.err.println("processCommand: NULL requestPayload");
+				}
 				return;
 			}
 			
@@ -151,7 +153,9 @@ public class ATMProtocol implements Protocol {
 		try {
 			msgObject = (Object) reader.readObject();
 			
-			System.out.println(msgObject.getClass().getName() + " received");
+			if (PropertiesFile.isDebugMode()) {
+				System.out.println("processRemoteCommands: msgObject=" + msgObject);
+			}
 			if (msgObject instanceof Message) {
 				this.processMessage((Message) msgObject);
 			}
@@ -160,7 +164,9 @@ public class ATMProtocol implements Protocol {
 			}
 
 		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
+			if (PropertiesFile.isDebugMode()) {
+				e.printStackTrace();
+			}
 		} // end catch
 
 	}
@@ -170,7 +176,9 @@ public class ATMProtocol implements Protocol {
 		if (msgObject.mType == KeyExchangeMessage.MessageType.CertificateResponse) {
 
 			PublicKey bankPublicKey = this.keyExchangeSupport.validateCertificate(((CertificateResponseMessage) msgObject).getBankCert(), G2Constants.BANK_NAME);
-			System.out.println("process Message: bankPublicKey=" + bankPublicKey); //XXX
+			if (PropertiesFile.isDebugMode()) {
+				System.out.println("processMessage: bankPublicKey=" + bankPublicKey);
+			}
 			if (bankPublicKey != null) {
 				
 				this.transactionManager.setSessionId(((CertificateResponseMessage) msgObject).getSessionId());
@@ -178,13 +186,19 @@ public class ATMProtocol implements Protocol {
 				byte[] secretBytes = this.keyExchangeSupport.encryptSecret(secret, bankPublicKey);
 				try {
 					this.writer.writeObject(new SecretExchangeMessage(secretBytes, this.transactionManager.getSessionId()));
-					System.out.println("Secure session created.");
+					if (PropertiesFile.isDebugMode()) {
+						System.out.println("Secure session created.");
+					}
 				} catch (IOException e) {
-					e.printStackTrace();
+					if (PropertiesFile.isDebugMode()) {
+						e.printStackTrace();
+					}
 				}
 			}
 			else {
-				System.err.println("Bad Bank Public Key!");
+				if (PropertiesFile.isDebugMode()) {
+					System.err.println("Bad Bank Public Key!");
+				}
 			}
 		}
 	}
