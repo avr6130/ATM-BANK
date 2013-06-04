@@ -6,16 +6,26 @@ import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.security.PublicKey;
 
 import messaging.AuthenticationRequest;
 import messaging.AuthenticationResponse;
 import messaging.BalanceRequest;
 import messaging.BalanceResponse;
 import messaging.Message;
-import messaging.MessageHandler;
 import messaging.Payload;
+import messaging.TerminationResponse;
 import messaging.WithdrawRequest;
 import messaging.WithdrawResponse;
+import authority.G2Constants;
+import crypto.CryptoAES;
+import crypto.keyexchange.KeyExchangeSupport;
+import crypto.keyexchange.KeyExchangeSupport.AppMode;
+import crypto.keyexchange.messages.CertificateResponseMessage;
+import crypto.keyexchange.messages.InitiationMessage;
+import crypto.keyexchange.messages.KeyExchangeMessage;
+import crypto.keyexchange.messages.SecretExchangeMessage;
+import crypto.keyexchange.messages.SecretExchangePayload;
 
 /**
  * An ATMProtocol processes local splitStr[0]s sent to the ATM and writes to or reads
@@ -25,151 +35,194 @@ import messaging.WithdrawResponse;
 
 public class ATMProtocol implements Protocol {
 
-    private ObjectOutputStream writer;
-    private ObjectInputStream reader;
-    private TransactionManager atmTransactionManager = new TransactionManager();
-    private AuthenticationRequest authenticationRequest;
-    private MessageHandler messageHandler = new MessageHandler();
+	private ObjectOutputStream writer;
+	private ObjectInputStream reader;
+	private TransactionManager transactionManager;
+	private AuthenticationRequest authenticationRequest;
+	private KeyExchangeSupport keyExchangeSupport;
 
-    public ATMProtocol(Socket socket) throws IOException {
-        writer = new ObjectOutputStream(socket.getOutputStream());
-        reader = new ObjectInputStream(socket.getInputStream());
-    }
-
-    /* Continue to read input until terminated. */
-    public void processLocalCommands(BufferedReader stdIn, String prompt) throws IOException {
-        String userInput;
-
-        while ((userInput = stdIn.readLine()) != null) {
-            processCommand(userInput);
-            System.out.print(prompt);
-        }
-
-        stdIn.close();
-    }
-
-    private void processCommand(String command) throws IOException {
-
-        // Split the input command on whitespace
-        String[] splitCmdString = command.split("\\s+");
-        
-        Message requestMessage = null;
-
-        if (splitCmdString[0].toLowerCase().matches("begin-session")) {
-        	requestMessage = this.generateAuthenticationRequest(splitCmdString);
-
-        } // end if begin-session request
-        else if (splitCmdString[0].toLowerCase().matches("balance")) {
-        	requestMessage = this.generateBalanceRequest();
-        } // end else if balance request
-        else if (splitCmdString[0].toLowerCase().matches("withdraw")) {
-        	requestMessage = this.generateWithdrawRequest();  	
-        } else if (splitCmdString[0].toLowerCase().matches("end-session")) {
-
-            atmTransactionManager.endCurrentTransaction();
-
-        } // end else if end-session
-
-        else {
-            System.out.println("Illegal input entered");
-        } // end else
-        
-        try {
-        	if (requestMessage != null) {
-	            writer.writeObject(requestMessage);
-	
-	            // After the message is set to bank, prepare to process the response and block
-	            processRemoteCommands();
-        	}
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            e.getMessage();   //To change body of catch statement use File | Settings | File Templates.
-        } // end catch
-
-    } // end processCommand
-
-    private Message generateAuthenticationRequest(String[] splitCmdString) throws IOException {
-    	
-    	Message msg = null;
-    	if (atmTransactionManager.transactionActive()) {
-            System.out.println("Transaction currently in progress.  Please end-session before beginning a new session.");
-            return msg;
-        } // end if transactionActive()
-        
-    	authenticationRequest = atmTransactionManager.authenticateSession(splitCmdString);
-
-    	if (authenticationRequest == null) {
-    		System.out.println("Unauthorized");
-    		return msg;
-    	} else {
-    		msg = new Message();
-    		msg.setPayload(authenticationRequest);
-    		return msg;
-    	}
- 
+	public ATMProtocol(Socket socket) throws IOException {
+		writer = new ObjectOutputStream(socket.getOutputStream());
+		reader = new ObjectInputStream(socket.getInputStream());
+		keyExchangeSupport = new KeyExchangeSupport(AppMode.ATM);
 	}
 
-	private Message generateWithdrawRequest() {
-		Message msg = null;
-		
-    	if (!atmTransactionManager.transactionActive()) {
-            System.out.println("No user logged in");
-            return msg;
-        }
-    	
+	/* Continue to read input until terminated. */
+	public void processLocalCommands(BufferedReader stdIn, String prompt) throws IOException {
+		String userInput;
+
+		while ((userInput = stdIn.readLine()) != null) {
+			processCommand(userInput);
+			System.out.print(prompt);
+		}
+
+		stdIn.close();
+	}
+
+	private void processCommand(String command) throws IOException {
+		Payload requestPayload = null;
+		Message requestMessage = null;
+
+		// Split the input command on whitespace
+		String[] splitCmdString = command.split("\\s+");
+
+		if (splitCmdString[0].toLowerCase().matches("begin-session")) {
+			if (transactionManager != null && transactionManager.transactionActive()) {
+				System.out.println("Transaction currently in progress.  Please end-session before beginning a new session.");
+				return;
+			}
+			this.transactionManager = new TransactionManager();
+			requestPayload = this.generateAuthenticationRequest(splitCmdString);
+			if (requestPayload == null) {
+				if (PropertiesFile.isDebugMode()) {
+					System.err.println("processCommand: NULL requestPayload");
+				}
+				return;
+			}
+			
+			this.writer.writeObject(new InitiationMessage());
+			this.processRemoteCommands();
+		}
+		else if (splitCmdString[0].toLowerCase().matches("balance")) {
+			requestPayload = this.generateBalanceRequest();
+		}
+		else if (splitCmdString[0].toLowerCase().matches("withdraw")) {
+			requestPayload = this.generateWithdrawRequest();  	
+		} 
+		else if (splitCmdString[0].toLowerCase().matches("end-session")) {
+			transactionManager.endCurrentTransaction();
+			requestPayload = this.generateTerminationRequest();
+		}
+		else {
+			System.out.println("Illegal input entered");
+		}
+
+		if (requestPayload != null) {
+			requestMessage = new Message();
+			requestMessage.setSessionId(this.transactionManager.getSessionId());
+			requestMessage.setSealedPayload(CryptoAES.encrypt(this.transactionManager.getSessionKey(), requestPayload));
+
+			writer.writeObject(requestMessage);
+
+			// After the message is set to bank, prepare to process the response and block
+			processRemoteCommands();
+		}
+
+	} // end processCommand
+
+	private Payload generateTerminationRequest() {    	
+
+		return null;
+	}
+
+	private Payload generateAuthenticationRequest(String[] splitCmdString) throws IOException {
+		authenticationRequest = transactionManager.authenticateSession(splitCmdString);
+
+		if (authenticationRequest == null) {
+			System.out.println("Unauthorized");
+		}
+		return this.authenticationRequest;
+	}
+
+	private Payload generateWithdrawRequest() {
+		if (!transactionManager.transactionActive()) {
+			System.out.println("No user logged in");
+			return null;
+		}
+
 		double amt = promptForWithdraw();
 		if (amt > 0) {
-			msg = new Message();
-	        WithdrawRequest withdrawRequest = new WithdrawRequest(atmTransactionManager.getActiveAccountNum(), amt);
-
-	         msg.setPayload(withdrawRequest);
-	         return msg;
+			return new WithdrawRequest(transactionManager.getActiveAccountNum(), amt);
 		}
-		return msg;
+
+		return null;
 	}
 
-	private Message generateBalanceRequest() {
-		Message msg = null;
-		if (!atmTransactionManager.transactionActive()) {
+	private Payload generateBalanceRequest() {
+		if (!transactionManager.transactionActive()) {
 			System.out.println("No user logged in");
-			return msg;
+			return null;
 		}
 
-		BalanceRequest balanceRequest = new BalanceRequest(atmTransactionManager.getActiveAccountNum());
-		
-		msg = new Message();
-		msg.setPayload(balanceRequest);
-		return msg;
+		return new BalanceRequest(transactionManager.getActiveAccountNum());
 	}
 
 	public void processRemoteCommands() throws IOException {
-        Message msgObject;
+		Object msgObject;
 
-        try {
-            msgObject = (Message) reader.readObject();
+		try {
+			msgObject = (Object) reader.readObject();
+			
+			if (PropertiesFile.isDebugMode()) {
+				System.out.println("processRemoteCommands: msgObject=" + msgObject);
+			}
+			if (msgObject instanceof Message) {
+				this.processMessage((Message) msgObject);
+			}
+			else if(msgObject instanceof KeyExchangeMessage) {
+				this.processMessage((KeyExchangeMessage) msgObject);
+			}
 
-            // Pull the payload out of the generic message.  The payload is the
-            // specific message type.
-            Payload payload = msgObject.getPayload();
+		} catch (ClassNotFoundException e) {
+			if (PropertiesFile.isDebugMode()) {
+				e.printStackTrace();
+			}
+		} // end catch
 
-            if (payload instanceof AuthenticationResponse) {
-                atmTransactionManager.authenticationResponse((AuthenticationResponse) payload);
-            } // end AuthenticationResponse
+	}
 
-            else if (payload instanceof BalanceResponse) {
-                atmTransactionManager.balanceResponse((BalanceResponse) payload);
-            } // end BalanceResponse
-            else if (payload instanceof WithdrawResponse) {
-            	atmTransactionManager.withdrawResponse((WithdrawResponse) payload);
-            }
+	private void processMessage(KeyExchangeMessage msgObject) {
 
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } // end catch
+		if (msgObject.mType == KeyExchangeMessage.MessageType.CertificateResponse) {
 
-    }
-    
+			PublicKey bankPublicKey = this.keyExchangeSupport.validateCertificate(((CertificateResponseMessage) msgObject).getBankCert(), G2Constants.BANK_NAME);
+			if (PropertiesFile.isDebugMode()) {
+				System.out.println("processMessage: bankPublicKey=" + bankPublicKey);
+			}
+			if (bankPublicKey != null) {
+				
+				this.transactionManager.setSessionId(((CertificateResponseMessage) msgObject).getSessionId());
+				SecretExchangePayload secret = new SecretExchangePayload(this.transactionManager.getActiveAccountNum(), this.transactionManager.getSessionId(), this.transactionManager.getSessionKey());
+				byte[] secretBytes = this.keyExchangeSupport.encryptSecret(secret, bankPublicKey);
+				try {
+					this.writer.writeObject(new SecretExchangeMessage(secretBytes, this.transactionManager.getSessionId()));
+					if (PropertiesFile.isDebugMode()) {
+						System.out.println("Secure session created.");
+					}
+				} catch (IOException e) {
+					if (PropertiesFile.isDebugMode()) {
+						e.printStackTrace();
+					}
+				}
+			}
+			else {
+				if (PropertiesFile.isDebugMode()) {
+					System.err.println("Bad Bank Public Key!");
+				}
+			}
+		}
+	}
+
+	private void processMessage(Message msgObject) {
+		// Pull the payload out of the generic message.  The payload is the
+		// specific message type.
+		Payload payload = CryptoAES.decrypt(this.transactionManager.getSessionKey(), msgObject.getSealedPayload());
+
+		if (payload instanceof AuthenticationResponse) {
+			transactionManager.authenticationResponse((AuthenticationResponse) payload);
+		} 
+		else if (payload instanceof BalanceResponse) {
+			transactionManager.balanceResponse((BalanceResponse) payload);
+		}
+		else if (payload instanceof WithdrawResponse) {
+			transactionManager.withdrawResponse((WithdrawResponse) payload);
+		}
+		else if (payload instanceof TerminationResponse) {
+			transactionManager.endCurrentTransaction();
+			this.transactionManager = null;
+		}
+	}
+
 	private double promptForWithdraw() {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
@@ -188,10 +241,10 @@ public class ATMProtocol implements Protocol {
 		return amt;
 	}
 
-    /* Clean up all open streams. */
-    public void close() throws IOException {
-        writer.close();
-        reader.close();
-    }
+	/* Clean up all open streams. */
+	public void close() throws IOException {
+		writer.close();
+		reader.close();
+	}
 
 }

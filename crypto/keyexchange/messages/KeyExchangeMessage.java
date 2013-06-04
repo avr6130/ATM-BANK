@@ -1,6 +1,8 @@
 package crypto.keyexchange.messages;
 
-public abstract class KeyExchangeMessage {
+import java.io.Serializable;
+
+public abstract class KeyExchangeMessage implements Serializable {
 
 	public static enum MessageType {
 		InitiateExchange(), CertificateResponse(), SecretExchange();
@@ -14,6 +16,11 @@ public abstract class KeyExchangeMessage {
 
 	public MessageType getmType() {
 		return mType;
+	}
+
+	@Override
+	public String toString() {
+		return "KeyExchangeMessage [mType=" + mType + "]";
 	}
 
 }

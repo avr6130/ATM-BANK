@@ -2,6 +2,7 @@ package crypto;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.Serializable;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -10,6 +11,8 @@ import java.security.spec.RSAPublicKeySpec;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+
+import original.PropertiesFile;
 
 public class Keygen {
 
@@ -69,7 +72,7 @@ public class Keygen {
 	 * @param keySize  Size of the key to generate (2048, 4096, 128 or 256 depending on algorithm)
 	 * @return  SecretKey if algorithm is AES, RSAKeyPairInfo if RSA and null if anything else or an error occurs
 	 */
-	public static Object generateKey(String algorithmName, int keySize) {
+	public static Serializable generateKey(String algorithmName, int keySize) {
 		
 		if (algorithmName.equals("RSA")) {
 			if (keySize == 2048 || keySize == 4096) {
@@ -101,7 +104,7 @@ public class Keygen {
 			return keyGen.generateKey();
 						
 		} catch (Exception e) {
-			if (System.getProperty("DEBUG_MODE") != null) {
+			if (PropertiesFile.isDebugMode()) {
 				e.printStackTrace();
 			}
 			return null;
@@ -128,7 +131,7 @@ public class Keygen {
 			return new RSAKeyPairInfo(pub.getModulus(),pub.getPublicExponent(), priv.getModulus(),priv.getPrivateExponent());
 			
 		} catch (Exception e) {
-			if (System.getProperty("DEBUG_MODE") != null) {
+			if (PropertiesFile.isDebugMode()) {
 				e.printStackTrace();
 			}
 			return null;

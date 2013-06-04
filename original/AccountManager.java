@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
 
+import authority.G2Constants;
+
 import messaging.AuthenticationRequest;
 
 /**
@@ -17,8 +19,10 @@ import messaging.AuthenticationRequest;
 
 public class AccountManager {
 
-    private final short MAX_FAILED_ATTEMPTS = 3;
-    private final int NUM_OF_LOCKOUT_SECONDS = 60;
+    private final short MAX_FAILED_ATTEMPTS = Short.parseShort(
+    		PropertiesFile.getProperty(PropertiesFile.LOGIN_ATTEMPTS, "3"));
+    private final long LOCKOUT_DURATION = Integer.parseInt(
+    		PropertiesFile.getProperty(PropertiesFile.LOCKOUT_DURATION, "60")) * G2Constants.SEC_TO_MSEC;
     private static int accountNumber = 16849327;
     private static int initialPin = 1095;
     private static HashMap<Integer, Account> acctMap = new HashMap<Integer, Account>();
@@ -34,34 +38,31 @@ public class AccountManager {
 
             createAtmCardFile(newAcct.getAtmCard());
 
-            // Debug
-            newAcct.print();
-
             // Manipulate account variables
             accountNumber++;
             initialPin += 2578;
 
         } catch (IOException e) {
-            e.printStackTrace();
-            e.getMessage();
+        	if (PropertiesFile.isDebugMode()) {
+                e.printStackTrace();
+        	}
         }
 
     } // end createAccount
 
-    public void printAllAccounts() {
-    	
-    	for (Integer acctNo: acctMap.keySet()){
-    		acctMap.get(acctNo).print();
-    	}
-    } // end printAllAccounts
-
     public void retrieveAllAccounts() throws IOException {
     	acctMap = (HashMap<Integer, Account>)Disk.load("accountsFile");
+    	if (PropertiesFile.isDebugMode()) {
+        	System.out.println(acctMap);
+        }
     } // end retrieveAllAccounts
     
 
     public void storeAllAccounts() throws IOException {
         Disk.save((Serializable) acctMap, "accountsFile");
+        if (PropertiesFile.isDebugMode()) {
+        	System.out.println(acctMap);
+        }
     } // end storeAllAccounts
 
     public void createAtmCardFile(AtmCardClass atmCard) throws IOException {
@@ -74,9 +75,6 @@ public class AccountManager {
 
     public boolean authenticateRequest(AuthenticationRequest msg) {
 
-        boolean authenticated = false;
-
-
         Account currAcct = acctMap.get(msg.getAccountNumber());
 
         if (currAcct.getNextValidLoginTime() > System.currentTimeMillis()) {
@@ -84,7 +82,7 @@ public class AccountManager {
             System.out.println("\nRemote command processed.  This account is currently locked out.  Try again later.");
 
             // Fail authentication/validation and return immediately
-            return authenticated = false;
+            return false;
 
         } // end if getNextValidationTime
 
@@ -93,12 +91,12 @@ public class AccountManager {
             System.out.println("\nRemote command processed.  MAX_FAILED_LOGIN_ATTEMPTS.");
 
             // Set the valid login time into the future to avoid repetitive false login attempts
-            currAcct.setNextValidLoginTime((NUM_OF_LOCKOUT_SECONDS * 1000L) + System.currentTimeMillis());
+            currAcct.setNextValidLoginTime(LOCKOUT_DURATION + System.currentTimeMillis());
 
             // Now that a lockout time has been set, reset the number of failed login attempts
             currAcct.resetCurrentNumOfFailedLoginAttempts();
 
-            return authenticated = false;
+            return false;
         } // end if now MAX_FAILED_ATTEMPTS
 
         // Check the pin
@@ -106,13 +104,13 @@ public class AccountManager {
             System.out.println("\nRemote command processed. PIN didn't match.");
             currAcct.incrementCurrentNumOfFailedLoginAttempts();
 
-            return authenticated = false;
+            return false;
 
         } // end if entered pin != pin
         else { // The pin entered must have been good
             System.out.println("\nRemote command processed.  AUTHENTICATED.");
             currAcct.resetCurrentNumOfFailedLoginAttempts();
-            return authenticated = true;
+            return true;
         } // end else -> entered pin is correct
     } // end authenticateRequest()
     
@@ -131,7 +129,7 @@ public class AccountManager {
     public static void processDep(int acctNo, double amt)
     {
     	Account acct = acctMap.get(acctNo);
-    	acct.setBal(acct.getBal() + amt);
+    	acct.setBalance(acct.getBal() + amt);
     	acctMap.put(acctNo, acct);
     }
 
@@ -142,7 +140,7 @@ public class AccountManager {
     	
     	//check if $$$ in the bank
     	if (acct.getBal() >= amt) {
-    		acct.setBal(acct.getBal() - amt);
+    		acct.setBalance(acct.getBal() - amt);
     		acctMap.put(acctNo, acct);
         	return true;
     	} else {

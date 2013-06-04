@@ -6,7 +6,6 @@ import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.security.PrivateKey;
 import java.util.HashMap;
 
 import messaging.AuthenticationRequest;
@@ -15,10 +14,17 @@ import messaging.BalanceRequest;
 import messaging.BalanceResponse;
 import messaging.Message;
 import messaging.Payload;
-import messaging.SessionRequest;
-import messaging.SessionResponse;
+import messaging.TerminationRequest;
+import messaging.TerminationResponse;
 import messaging.WithdrawRequest;
 import messaging.WithdrawResponse;
+import crypto.CryptoAES;
+import crypto.keyexchange.KeyExchangeSupport;
+import crypto.keyexchange.KeyExchangeSupport.AppMode;
+import crypto.keyexchange.messages.CertificateResponseMessage;
+import crypto.keyexchange.messages.KeyExchangeMessage;
+import crypto.keyexchange.messages.SecretExchangeMessage;
+import crypto.keyexchange.messages.SecretExchangePayload;
 
 /**
  * A BankProtocol processes local and remote commands sent to the Bank and writes to
@@ -31,8 +37,9 @@ public class BankProtocol implements Protocol {
 	private ObjectOutputStream writer;
 	private ObjectInputStream reader;
 	private HashMap<Integer, SessionInfo> sessionMap;
-	private int sessionIDcounter = 1;
+	private int sessionIdCounter = 1;
 	private AccountManager accountManager;
+	private KeyExchangeSupport keyExchangeSupport;
 
 	public BankProtocol(Socket socket) throws IOException {
 
@@ -40,6 +47,7 @@ public class BankProtocol implements Protocol {
 		reader = new ObjectInputStream(socket.getInputStream());
 		sessionMap = new HashMap<Integer, SessionInfo>();
 		accountManager = new AccountManager();
+		keyExchangeSupport = new KeyExchangeSupport(AppMode.BANK);
 	}
 
 	/* Process commands sent through the router. */
@@ -48,9 +56,12 @@ public class BankProtocol implements Protocol {
 
 		try {
 			while ((msgObject = reader.readObject()) != null) {
-				
+				System.out.println(msgObject.getClass().getName() + " received");
 				if (msgObject instanceof Message) {
 					this.processMessage((Message) msgObject);
+				}
+				else if(msgObject instanceof KeyExchangeMessage) {
+					this.processMessage((KeyExchangeMessage) msgObject);
 				}
 
 				// This was inserted here because the command line reader thread is
@@ -62,6 +73,42 @@ public class BankProtocol implements Protocol {
 			}
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
+		}
+	}
+
+	private void processMessage(KeyExchangeMessage msgObject) {
+		KeyExchangeMessage responseMsg = null;
+		if (msgObject.mType == KeyExchangeMessage.MessageType.InitiateExchange) {
+			int sessionId = this.sessionIdCounter++;
+			this.sessionMap.put(Integer.valueOf(sessionId), null);
+			responseMsg = new CertificateResponseMessage(this.keyExchangeSupport.getBankCertificate(), sessionId);
+		}
+		else if (msgObject.mType == KeyExchangeMessage.MessageType.SecretExchange) {
+			SecretExchangePayload payload = (SecretExchangePayload) keyExchangeSupport.decryptSecret(((SecretExchangeMessage) msgObject).getSecret());
+			Integer sessionId = Integer.valueOf(payload.getSessionId());
+			if (this.sessionMap.containsKey(sessionId)) {
+				SessionInfo sessionInfo = new SessionInfo(payload.getAccountNumber(), payload.getSessionKey());
+				this.sessionMap.put(sessionId, sessionInfo);
+			} else {
+				if (PropertiesFile.isDebugMode()) {
+					System.err.println("processMessage: Session ID not valid for msgObject=" + msgObject);
+				}
+			}
+			
+		}
+		else {
+			if (PropertiesFile.isDebugMode()) {
+				System.err.println("processMessage: Bad msgObject=" + msgObject);
+			}
+		}
+		if (responseMsg != null) {
+			try {
+				this.writer.writeObject(responseMsg);
+			} catch (IOException e) {
+				if (PropertiesFile.isDebugMode()) {
+					e.printStackTrace();
+				}
+			}
 		}
 	}
 
@@ -82,17 +129,6 @@ public class BankProtocol implements Protocol {
 
 		// Create the SessionResponse object and give it the account number and result of PIN validation.
 		return new AuthenticationResponse(authRequest.getAccountNumber(), authenticated);
-	}
-
-	private Payload generateSessionResponse(Integer sessionId, SessionRequest sessionRequest) {
-		PrivateKey key = null;  //TODO instantiate private key
-		SessionInfo sessionInfo = this.sessionMap.get(sessionId);
-
-		if (sessionInfo == null) {
-			sessionInfo = new SessionInfo(sessionRequest.getAccountNumber(), key);
-			this.sessionMap.put(sessionId, sessionInfo);
-		}
-		return new SessionResponse(sessionRequest.getAccountNumber(), sessionInfo);
 	}
 	
 	private Payload generateBalanceResponse(Integer sessionId, BalanceRequest balanceRequest) {
@@ -115,15 +151,31 @@ public class BankProtocol implements Protocol {
 		Message responseMessage = new Message();
 		
 		Integer sessionId = Integer.valueOf(messageObject.getSessionID());
-		//TODO decrypt payload
-		Payload requestPayload = messageObject.getPayload();
 		
-		if (requestPayload instanceof SessionRequest) {
-			// if the session ID does not exist, which it should not, assign a new ID
-			if (!this.sessionMap.containsKey(sessionId)) {
-				sessionId = Integer.valueOf(this.sessionIDcounter++);
+		SessionInfo sessionInfo = this.sessionMap.get(sessionId);
+		
+		// the bank does not have record of the message's sessionId
+		if (sessionInfo == null) {
+			if (PropertiesFile.isDebugMode()) {
+				System.err.println("processMessage: SessionInfo does not exist for sessionId=" + sessionId);
 			}
-			responsePayload = this.generateSessionResponse(sessionId, (SessionRequest) requestPayload);
+			//TODO respond to message?
+			return;
+		}
+		
+		// try to decrypt the sealed payload
+		Payload requestPayload = CryptoAES.decrypt(sessionInfo.getKey(), messageObject.getSealedPayload());
+		
+		if (requestPayload == null || requestPayload.getAccountNumber() != sessionInfo.getAccountNumber()) {
+			if (PropertiesFile.isDebugMode()) {
+				System.err.println("processMessage: Bad requestPayload=" + requestPayload);
+			}
+			//TODO respond to message?
+			return;
+		}
+		// process message
+		else if (!sessionInfo.isValid() || requestPayload instanceof TerminationRequest) {
+			responsePayload = this.generateTerminationResponse(sessionId);
 		}
 		else if (requestPayload instanceof AuthenticationRequest) {
 			responsePayload = this.generateAuthenticationResponse(sessionId, (AuthenticationRequest) requestPayload);
@@ -134,15 +186,21 @@ public class BankProtocol implements Protocol {
 		else if (requestPayload instanceof WithdrawRequest) {
 			responsePayload = this.generateWithdrawResponse(sessionId, (WithdrawRequest) requestPayload);
 		}
-		responseMessage.setSessionID(sessionId.intValue());
-		responseMessage.setPayload(responsePayload);  //TODO encrypt payload
+		responseMessage.setSessionId(sessionId.intValue());
+		responseMessage.setSealedPayload(CryptoAES.encrypt(sessionInfo.getKey(), responsePayload));
 		try {
 			this.writer.writeObject(responseMessage);
 		} catch (IOException e) {
-			e.printStackTrace();
-			e.getMessage();
+			if (PropertiesFile.isDebugMode()) {
+				e.printStackTrace();
+			}
 		}
+	}
 
+	private Payload generateTerminationResponse(Integer sessionId) {
+		SessionInfo sessionInfo = this.sessionMap.remove(sessionId);
+		sessionInfo.terminateSession();
+		return new TerminationResponse(sessionInfo.getAccountNumber());
 	}
 
 	/* Process user input. */

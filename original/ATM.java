@@ -12,7 +12,9 @@ public class ATM {
     private static final String prompt = "ATM: ";
 
     public static void main(String[] args) {
-
+    	//Initialize properties
+    	PropertiesFile.getProperties();    	
+    	
         if (args.length != 1) {
             System.out.println("Usage: java ATM <ATM-port>");
             System.exit(1);

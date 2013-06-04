@@ -2,6 +2,8 @@ package messaging;
 
 import java.io.Serializable;
 
+import javax.crypto.SealedObject;
+
 /**
  * Created with IntelliJ IDEA.
  * User: Team2
@@ -10,23 +12,32 @@ import java.io.Serializable;
  */
 public class Message implements Serializable {
 
-    private int sessionID = 0;
+	private int sessionId = 0;
 
-    private Payload payload = null;
+    private SealedObject sealedPayload = null;
 
     public int getSessionID() {
-        return sessionID;
+        return sessionId;
     }
 
-    public void setSessionID(int sessionID) {
-        this.sessionID = sessionID;
+    /**
+     * @param sessionId
+     */
+    public void setSessionId(int sessionId) {
+        this.sessionId = sessionId;
     }
 
-    public Payload getPayload() {
-        return payload;
+    public SealedObject getSealedPayload() {
+        return this.sealedPayload;
     }
 
-    public void setPayload(Payload payload) {
-        this.payload = payload;
+    public void setSealedPayload(SealedObject sealedPayload) {
+        this.sealedPayload = sealedPayload;
     }
+    
+    @Override
+	public String toString() {
+		return "Message [sessionId=" + sessionId + ", sealedPayload="
+				+ sealedPayload + "]";
+	}
 }

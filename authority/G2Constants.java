@@ -9,9 +9,7 @@ public class G2Constants {
 	public static final String BANK_NAME = "G2 BANK";
 	public static final String CERTIFICATE_SER_FILE_SUFFIX = "_Certificate.ser";
 	public static final String SIGNATURE_ALGORITHM = "SHA512withRSA";
-
-	private G2Constants() {
-		// TODO Auto-generated constructor stub
-	}
-
+	public static final long SEC_TO_MSEC = 1000L;
+	
+	private G2Constants() {}
 }

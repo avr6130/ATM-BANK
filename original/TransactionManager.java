@@ -1,13 +1,14 @@
 package original;
 
-import messaging.AuthenticationRequest;
-import messaging.BalanceRequest;
-import messaging.BalanceResponse;
-import messaging.AuthenticationResponse;
-import messaging.WithdrawResponse;
-
 import java.io.File;
 import java.io.IOException;
+import java.security.Key;
+
+import messaging.AuthenticationRequest;
+import messaging.AuthenticationResponse;
+import messaging.BalanceResponse;
+import messaging.WithdrawResponse;
+import crypto.Keygen;
 
 /**
  * Created with IntelliJ IDEA.
@@ -21,15 +22,26 @@ public class TransactionManager {
     private boolean transactionActive = false;
     private AtmCardClass atmCard;
     private File cardFile;
-    private int activeAccountNum = 0;
-    private int numberOfFailedLoginAttempts;
+    private int accountNumber = 0;
 
     private AuthenticationRequest authenticationRequest;
-    private AuthenticationResponse authenticationResponse;
-    private BalanceRequest balanceRequest;
-    private BalanceResponse balanceResponse;
+    private Key sessionKey;
+    private int sessionId;
 
-    public TransactionManager() {
+    public int getSessionId() {
+		return sessionId;
+	}
+
+	public TransactionManager() {
+    	this.sessionKey = (Key) Keygen.generateKey("AES", 128);
+    }
+    
+    public Key getSessionKey() {
+    	return this.sessionKey;
+    }
+    
+    public void setSessionId(int sessionId) {
+    	this.sessionId = sessionId;
     }
 
     public void endCurrentTransaction() {
@@ -44,7 +56,7 @@ public class TransactionManager {
     } // end setTransactionActive
 
     public int getActiveAccountNum() {
-        return activeAccountNum;
+        return accountNumber;
     } // end getActiveAccountNum()
 
     public boolean transactionActive() {
@@ -61,7 +73,7 @@ public class TransactionManager {
             // Not enough command line arguments were given so set the
             // transaction state to inactive and the session request to null
             transactionActive = false;
-            activeAccountNum = 0;
+            accountNumber = 0;
             authenticationRequest = null;
 
         } // end if length < 1
@@ -77,7 +89,7 @@ public class TransactionManager {
                 // User's name does not match the card or the file doesn't exist so set the
                 // transaction state to inactive and the session request to null
                 transactionActive = false;
-                activeAccountNum = 0;
+                accountNumber = 0;
                 authenticationRequest = null;
 
             } // end if not a valid card file
@@ -92,7 +104,7 @@ public class TransactionManager {
                     // User's name does not match the card or the file doesn't exist so set the
                     // transaction state to inactive and the session request to null
                     transactionActive = false;
-                    activeAccountNum = 0;
+                    accountNumber = 0;
                     authenticationRequest = null;
 
                 } // end if (!atmCard.getName().matches(splitCmdString[1]))
@@ -122,7 +134,7 @@ public class TransactionManager {
             if (transactionActive = authenticationResponse.isSessionValid() == true) {
 
                 // Set the active active account number
-                activeAccountNum = authenticationResponse.getAccountNumber();
+                accountNumber = authenticationResponse.getAccountNumber();
 
                 System.out.println("User " + atmCard.getName() + " is Authorized");
 

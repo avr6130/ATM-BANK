@@ -1,7 +1,6 @@
 package original;// Java core packages
 
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
 
 
 

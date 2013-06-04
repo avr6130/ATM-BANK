@@ -29,9 +29,7 @@ public class CA {
 	private static final BufferedReader rdr = new BufferedReader(new InputStreamReader(System.in));
 
 
-	private CA() {
-		// TODO Auto-generated constructor stub
-	}
+	private CA() {}
 
 	/**
 	 * @param args
