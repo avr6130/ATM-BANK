@@ -87,8 +87,7 @@ public class AccountManager {
             authorized = false;
 
         } // end if getNextValidationTime
-
-        if (currAcct.getCurrentNumOfFailedLoginAttempts() >= MAX_FAILED_ATTEMPTS) {
+        else if (currAcct.getCurrentNumOfFailedLoginAttempts() >= MAX_FAILED_ATTEMPTS) {
 
             System.out.println("\nRemote command processed.  MAX_FAILED_LOGIN_ATTEMPTS.");
 
@@ -102,7 +101,7 @@ public class AccountManager {
         } // end if now MAX_FAILED_ATTEMPTS
 
         // Check the pin
-        if (msg.getPin() != currAcct.getPin()) {
+        else if (msg.getPin() != currAcct.getPin()) {
             System.out.println("\nRemote command processed. PIN didn't match.");
             currAcct.incrementCurrentNumOfFailedLoginAttempts();
 
