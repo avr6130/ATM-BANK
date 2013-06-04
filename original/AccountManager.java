@@ -75,6 +75,8 @@ public class AccountManager {
 
     public boolean authenticateRequest(AuthenticationRequest msg) {
 
+    	boolean authorized = false;
+    	
         Account currAcct = acctMap.get(msg.getAccountNumber());
 
         if (currAcct.getNextValidLoginTime() > System.currentTimeMillis()) {
@@ -82,7 +84,7 @@ public class AccountManager {
             System.out.println("\nRemote command processed.  This account is currently locked out.  Try again later.");
 
             // Fail authentication/validation and return immediately
-            return false;
+            authorized = false;
 
         } // end if getNextValidationTime
 
@@ -96,7 +98,7 @@ public class AccountManager {
             // Now that a lockout time has been set, reset the number of failed login attempts
             currAcct.resetCurrentNumOfFailedLoginAttempts();
 
-            return false;
+            authorized = false;
         } // end if now MAX_FAILED_ATTEMPTS
 
         // Check the pin
@@ -104,14 +106,23 @@ public class AccountManager {
             System.out.println("\nRemote command processed. PIN didn't match.");
             currAcct.incrementCurrentNumOfFailedLoginAttempts();
 
-            return false;
+            authorized = false;
 
         } // end if entered pin != pin
         else { // The pin entered must have been good
             System.out.println("\nRemote command processed.  AUTHENTICATED.");
             currAcct.resetCurrentNumOfFailedLoginAttempts();
-            return true;
+            authorized = true;
         } // end else -> entered pin is correct
+        
+        try {
+			this.storeAllAccounts();
+		} catch (IOException e) {
+			if (PropertiesFile.isDebugMode()) {
+				e.printStackTrace();
+			}
+		}
+        return authorized;
     } // end authenticateRequest()
     
     public static int lookAcctByName(String name) {
