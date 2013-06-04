@@ -115,6 +115,7 @@ public class TransactionManager {
                     enteredPin = cin.readInt();
 
                     // Get the required information out of the card and prepare the message
+                    this.accountNumber = atmCard.getAccountNumber();
                     authenticationRequest = new AuthenticationRequest(enteredPin, atmCard.getAccountNumber());
                 }
 
