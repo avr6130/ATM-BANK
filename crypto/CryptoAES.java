@@ -25,6 +25,7 @@ import javax.crypto.SealedObject;
 import javax.crypto.spec.IvParameterSpec;
 
 import messaging.Payload;
+import messaging.SessionRequest;
 import messaging.SessionResponse;
 
 public class CryptoAES {
@@ -57,7 +58,7 @@ public class CryptoAES {
 
 			myKey = (Key) Keygen.generateKey(algorithmName, keySize);
 			
-			SessionResponse msg = new SessionResponse(200, true);
+			SessionRequest msg = new SessionRequest(0);
 			
 			SealedObject so = CryptoAES.encrypt(myKey, msg);
 			

@@ -69,6 +69,7 @@ public class KeyExchangeSupport {
 	 */
 	public SignedObject getBankCertificate() {
 		if (this.mode == AppMode.BANK) {
+			System.out.println("getBankCertificate=" + this.bankCertificate);  //XXX
 			return this.bankCertificate;
 		}
 		

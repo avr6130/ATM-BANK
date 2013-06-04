@@ -150,15 +150,14 @@ public class ATMProtocol implements Protocol {
 
 		try {
 			msgObject = (Object) reader.readObject();
-
+			
+			System.out.println(msgObject.getClass().getName() + " received");
 			if (msgObject instanceof Message) {
 				this.processMessage((Message) msgObject);
 			}
 			else if(msgObject instanceof KeyExchangeMessage) {
 				this.processMessage((KeyExchangeMessage) msgObject);
 			}
-
-
 
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
@@ -171,18 +170,23 @@ public class ATMProtocol implements Protocol {
 		if (msgObject.mType == KeyExchangeMessage.MessageType.CertificateResponse) {
 
 			PublicKey bankPublicKey = this.keyExchangeSupport.validateCertificate(((CertificateResponseMessage) msgObject).getBankCert(), G2Constants.BANK_NAME);
+			System.out.println("process Message: bankPublicKey=" + bankPublicKey); //XXX
 			if (bankPublicKey != null) {
+				
 				this.transactionManager.setSessionId(((CertificateResponseMessage) msgObject).getSessionId());
 				SecretExchangePayload secret = new SecretExchangePayload(this.transactionManager.getActiveAccountNum(), this.transactionManager.getSessionId(), this.transactionManager.getSessionKey());
 				byte[] secretBytes = this.keyExchangeSupport.encryptSecret(secret, bankPublicKey);
 				try {
 					this.writer.writeObject(new SecretExchangeMessage(secretBytes, this.transactionManager.getSessionId()));
+					System.out.println("Secure session created.");
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			}
+			else {
+				System.err.println("Bad Bank Public Key!");
+			}
 		}
-		//TODO handle bad message type
 	}
 
 	private void processMessage(Message msgObject) {

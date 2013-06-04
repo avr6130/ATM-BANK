@@ -56,7 +56,7 @@ public class BankProtocol implements Protocol {
 
 		try {
 			while ((msgObject = reader.readObject()) != null) {
-				
+				System.out.println(msgObject.getClass().getName() + " received");
 				if (msgObject instanceof Message) {
 					this.processMessage((Message) msgObject);
 				}
@@ -84,14 +84,13 @@ public class BankProtocol implements Protocol {
 			responseMsg = new CertificateResponseMessage(this.keyExchangeSupport.getBankCertificate(), sessionId);
 		}
 		else if (msgObject.mType == KeyExchangeMessage.MessageType.SecretExchange) {
-			
 			SecretExchangePayload payload = (SecretExchangePayload) keyExchangeSupport.decryptSecret(((SecretExchangeMessage) msgObject).getSecret());
 			Integer sessionId = Integer.valueOf(payload.getSessionId());
 			if (this.sessionMap.containsKey(sessionId)) {
 				SessionInfo sessionInfo = new SessionInfo(payload.getAccountNumber(), payload.getSessionKey());
 				this.sessionMap.put(sessionId, sessionInfo);
 			} else {
-				//TODO log error?
+				System.err.println("Session ID not valid");//TODO log error?
 			}
 			
 		}
