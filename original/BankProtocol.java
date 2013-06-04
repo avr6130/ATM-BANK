@@ -6,7 +6,6 @@ import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.security.Key;
 import java.util.HashMap;
 
 import messaging.AuthenticationRequest;
@@ -15,6 +14,8 @@ import messaging.BalanceRequest;
 import messaging.BalanceResponse;
 import messaging.Message;
 import messaging.Payload;
+import messaging.TerminationRequest;
+import messaging.TerminationResponse;
 import messaging.WithdrawRequest;
 import messaging.WithdrawResponse;
 import crypto.CryptoAES;
@@ -23,6 +24,7 @@ import crypto.keyexchange.KeyExchangeSupport.AppMode;
 import crypto.keyexchange.messages.CertificateResponseMessage;
 import crypto.keyexchange.messages.KeyExchangeMessage;
 import crypto.keyexchange.messages.SecretExchangeMessage;
+import crypto.keyexchange.messages.SecretExchangePayload;
 
 /**
  * A BankProtocol processes local and remote commands sent to the Bank and writes to
@@ -77,14 +79,21 @@ public class BankProtocol implements Protocol {
 	private void processMessage(KeyExchangeMessage msgObject) {
 		KeyExchangeMessage responseMsg = null;
 		if (msgObject.mType == KeyExchangeMessage.MessageType.InitiateExchange) {
-			responseMsg = new CertificateResponseMessage(this.keyExchangeSupport.getBankCertificate(), this.sessionIdCounter++);
+			int sessionId = this.sessionIdCounter++;
+			this.sessionMap.put(Integer.valueOf(sessionId), null);
+			responseMsg = new CertificateResponseMessage(this.keyExchangeSupport.getBankCertificate(), sessionId);
 		}
 		else if (msgObject.mType == KeyExchangeMessage.MessageType.SecretExchange) {
-			Key sessionKey = (Key) keyExchangeSupport.decryptSecret(((SecretExchangeMessage) msgObject).getSecret());
-			int sessionId = ((SecretExchangeMessage) msgObject).getSessionId();
-			int accountNumber = 0;  //TODO what to do about account number?
-			SessionInfo sessionInfo = new SessionInfo(accountNumber, sessionKey);
-			this.sessionMap.put(Integer.valueOf(sessionId), sessionInfo);
+			
+			SecretExchangePayload payload = (SecretExchangePayload) keyExchangeSupport.decryptSecret(((SecretExchangeMessage) msgObject).getSecret());
+			Integer sessionId = Integer.valueOf(payload.getSessionId());
+			if (this.sessionMap.containsKey(sessionId)) {
+				SessionInfo sessionInfo = new SessionInfo(payload.getAccountNumber(), payload.getSessionKey());
+				this.sessionMap.put(sessionId, sessionInfo);
+			} else {
+				//TODO log error?
+			}
+			
 		}
 		else {
 			//TODO bad message type
@@ -142,19 +151,22 @@ public class BankProtocol implements Protocol {
 		
 		// the bank does not have record of the message's sessionId
 		if (sessionInfo == null) {
-			//TODO log error?
+			//TODO log error/respond to message
 			return;
 		}
 		
+		// try to decrypt the sealed payload
 		Payload requestPayload = CryptoAES.decrypt(sessionInfo.getKey(), messageObject.getSealedPayload());
 		
 		if (requestPayload == null || requestPayload.getAccountNumber() != sessionInfo.getAccountNumber()) {
-			//TODO log error?
+			//TODO log error/respond to message
 			return;
 		}
-		
 		// process message
-		if (requestPayload instanceof AuthenticationRequest) {
+		else if (!sessionInfo.isValid() || requestPayload instanceof TerminationRequest) {
+			responsePayload = this.generateTerminationResponse(sessionId);
+		}
+		else if (requestPayload instanceof AuthenticationRequest) {
 			responsePayload = this.generateAuthenticationResponse(sessionId, (AuthenticationRequest) requestPayload);
 		}
 		else if (requestPayload instanceof BalanceRequest) {
@@ -172,6 +184,12 @@ public class BankProtocol implements Protocol {
 			e.getMessage();
 		}
 
+	}
+
+	private Payload generateTerminationResponse(Integer sessionId) {
+		SessionInfo sessionInfo = this.sessionMap.remove(sessionId);
+		sessionInfo.terminateSession();
+		return new TerminationResponse(sessionInfo.getAccountNumber());
 	}
 
 	/* Process user input. */

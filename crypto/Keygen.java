@@ -2,6 +2,7 @@ package crypto;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.Serializable;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -69,7 +70,7 @@ public class Keygen {
 	 * @param keySize  Size of the key to generate (2048, 4096, 128 or 256 depending on algorithm)
 	 * @return  SecretKey if algorithm is AES, RSAKeyPairInfo if RSA and null if anything else or an error occurs
 	 */
-	public static Object generateKey(String algorithmName, int keySize) {
+	public static Serializable generateKey(String algorithmName, int keySize) {
 		
 		if (algorithmName.equals("RSA")) {
 			if (keySize == 2048 || keySize == 4096) {
