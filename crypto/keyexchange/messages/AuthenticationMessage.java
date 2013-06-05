@@ -1,4 +1,5 @@
-package messaging;
+package crypto.keyexchange.messages;
+
 
 /**
  * Created with IntelliJ IDEA.
@@ -6,12 +7,12 @@ package messaging;
  * Date: 5/24/13
  * Time: 9:19 PM
  */
-public class AuthenticationResponse extends Payload {
+public class AuthenticationMessage extends KeyExchangeMessage {
 
     private boolean sessionValid = false;
 
-    public AuthenticationResponse(int accountNumber, boolean sessionValid) {
-        super(accountNumber);
+    public AuthenticationMessage(int accountNumber, boolean sessionValid) {
+    	super(KeyExchangeMessage.MessageType.AuthenticationResponse);
         this.sessionValid = sessionValid;
     }
 

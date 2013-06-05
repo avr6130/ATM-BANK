@@ -10,8 +10,6 @@ import java.security.PublicKey;
 
 import javax.crypto.SealedObject;
 
-import messaging.AuthenticationRequest;
-import messaging.AuthenticationResponse;
 import messaging.BalanceRequest;
 import messaging.BalanceResponse;
 import messaging.Message;
@@ -23,6 +21,7 @@ import authority.G2Constants;
 import crypto.CryptoAES;
 import crypto.keyexchange.KeyExchangeSupport;
 import crypto.keyexchange.KeyExchangeSupport.AppMode;
+import crypto.keyexchange.messages.AuthenticationMessage;
 import crypto.keyexchange.messages.CertificateResponseMessage;
 import crypto.keyexchange.messages.InitiationMessage;
 import crypto.keyexchange.messages.KeyExchangeMessage;
@@ -40,7 +39,6 @@ public class ATMProtocol implements Protocol {
 	private ObjectOutputStream writer;
 	private ObjectInputStream reader;
 	private TransactionManager transactionManager;
-	private AuthenticationRequest authenticationRequest;
 	private KeyExchangeSupport keyExchangeSupport;
 
 	public ATMProtocol(Socket socket) throws IOException {
@@ -74,15 +72,10 @@ public class ATMProtocol implements Protocol {
 				return;
 			}
 			this.transactionManager = new TransactionManager();
-			requestPayload = this.generateAuthenticationRequest(splitCmdString);
-			if (requestPayload == null) {
-				if (PropertiesFile.isDebugMode()) {
-					System.err.println("processCommand: NULL requestPayload");
-				}
-				return;
-			}
+			transactionManager.authenticateSession(splitCmdString);
 			
 			this.writer.writeObject(new InitiationMessage());
+			this.processRemoteCommands();
 			this.processRemoteCommands();
 		}
 		else if (splitCmdString[0].toLowerCase().matches("balance")) {
@@ -115,15 +108,6 @@ public class ATMProtocol implements Protocol {
 	private Payload generateTerminationRequest() {    	
 
 		return null;
-	}
-
-	private Payload generateAuthenticationRequest(String[] splitCmdString) throws IOException {
-		authenticationRequest = transactionManager.authenticateSession(splitCmdString);
-
-		if (authenticationRequest == null) {
-			System.out.println("Unauthorized");
-		}
-		return this.authenticationRequest;
 	}
 
 	private Payload generateWithdrawRequest() {
@@ -183,8 +167,14 @@ public class ATMProtocol implements Protocol {
 			}
 			if (bankPublicKey != null) {
 				
+				System.out.print("Enter your PIN: ");
+                String pin = cin.readLine();
 				this.transactionManager.setSessionId(((CertificateResponseMessage) msgObject).getSessionId());
-				SecretExchangePayload secret = new SecretExchangePayload(this.transactionManager.getActiveAccountNum(), this.transactionManager.getSessionId(), this.transactionManager.getSessionKey());
+				SecretExchangePayload secret = new SecretExchangePayload(
+						this.transactionManager.getActiveAccountNum(), 
+						this.transactionManager.getSessionId(), 
+						this.transactionManager.getSessionKey(), 
+						pin);
 				SealedObject so = this.keyExchangeSupport.encryptSecret(secret, bankPublicKey);
 				try {
 					this.writer.writeObject(new SecretExchangeMessage(so, this.transactionManager.getSessionId()));
@@ -202,6 +192,8 @@ public class ATMProtocol implements Protocol {
 					System.err.println("Bad Bank Public Key!");
 				}
 			}
+		} else if (msgObject.mType == KeyExchangeMessage.MessageType.AuthenticationResponse) {
+			this.transactionManager.authenticationMessage((AuthenticationMessage) msgObject);
 		}
 	}
 
@@ -210,10 +202,7 @@ public class ATMProtocol implements Protocol {
 		// specific message type.
 		Payload payload = CryptoAES.decrypt(this.transactionManager.getSessionKey(), msgObject.getSealedPayload());
 
-		if (payload instanceof AuthenticationResponse) {
-			transactionManager.authenticationResponse((AuthenticationResponse) payload);
-		} 
-		else if (payload instanceof BalanceResponse) {
+		if (payload instanceof BalanceResponse) {
 			transactionManager.balanceResponse((BalanceResponse) payload);
 		}
 		else if (payload instanceof WithdrawResponse) {
@@ -229,7 +218,7 @@ public class ATMProtocol implements Protocol {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
 		double amt = 0.0;
-		System.out.println("Enter the amount to withdraw:");
+		System.out.print("Enter the amount to withdraw:");
 
 		// read the amount to withdraw from the command-line
 		try {

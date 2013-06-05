@@ -6,18 +6,18 @@ import java.io.*;
 public class Account implements Serializable {
     private String name;
     private int acountNumber;
-    private int pin;
+    private String pin;
     private double balance;
-    private AtmCardClass atmCard;
+    private AtmCard atmCard;
     private long nextValidLoginTime = System.currentTimeMillis();
     private short currentNumOfFailedLoginAttempts = 0;
 
-    Account(String name, int accountNumber, int pin, double balance) {
+    Account(String name, int accountNumber, String pin, double balance) {
         this.name = name;
         this.acountNumber = accountNumber;
         this.pin = pin;
         this.balance = balance;
-        atmCard = new AtmCardClass(this.name, this.acountNumber);
+        atmCard = new AtmCard(this.name, this.acountNumber);
     }
 
     public void incrementCurrentNumOfFailedLoginAttempts() {
@@ -48,7 +48,7 @@ public class Account implements Serializable {
         return acountNumber;
     }
 
-    public int getPin() {
+    public String getPin() {
         return pin;
     }
 
@@ -56,7 +56,7 @@ public class Account implements Serializable {
         return balance;
     }
 
-    public AtmCardClass getAtmCard() {
+    public AtmCard getAtmCard() {
         return atmCard;
     }
     

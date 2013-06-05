@@ -4,11 +4,10 @@ import java.io.File;
 import java.io.IOException;
 import java.security.Key;
 
-import messaging.AuthenticationRequest;
-import messaging.AuthenticationResponse;
 import messaging.BalanceResponse;
 import messaging.WithdrawResponse;
 import crypto.Keygen;
+import crypto.keyexchange.messages.AuthenticationMessage;
 
 /**
  * Created with IntelliJ IDEA.
@@ -19,159 +18,109 @@ import crypto.Keygen;
  */
 
 public class TransactionManager {
-    private boolean transactionActive = false;
-    private AtmCardClass atmCard;
-    private File cardFile;
-    private int accountNumber = 0;
+	private boolean transactionActive = false;
+	private AtmCard atmCard;
+	private File cardFile;
+	private int accountNumber = 0;
 
-    private AuthenticationRequest authenticationRequest;
-    private Key sessionKey;
-    private int sessionId;
+	private Key sessionKey;
+	private int sessionId;
 
-    public int getSessionId() {
+	public int getSessionId() {
 		return sessionId;
 	}
 
 	public TransactionManager() {
-    	this.sessionKey = (Key) Keygen.generateKey("AES", 128);
-    }
-    
-    public Key getSessionKey() {
-    	return this.sessionKey;
-    }
-    
-    public void setSessionId(int sessionId) {
-    	this.sessionId = sessionId;
-    }
+		this.sessionKey = (Key) Keygen.generateKey("AES", 128);
+	}
 
-    public void endCurrentTransaction() {
-    	
-    	if (!transactionActive) {
-            System.out.println("No user logged in");
-            return;
-        }
-        transactionActive = false;
-        System.out.println(atmCard.getName() + " logged out.");
+	public Key getSessionKey() {
+		return this.sessionKey;
+	}
 
-    } // end setTransactionActive
+	public void setSessionId(int sessionId) {
+		this.sessionId = sessionId;
+	}
 
-    public int getActiveAccountNum() {
-        return accountNumber;
-    } // end getActiveAccountNum()
+	public void endCurrentTransaction() {
 
-    public boolean transactionActive() {
-        return transactionActive;
-    } // end transactionActive()
+		if (!transactionActive) {
+			System.out.println("No user logged in");
+			return;
+		}
+		transactionActive = false;
+		System.out.println(atmCard.getName() + " logged out.");
 
-    public AuthenticationRequest authenticateSession(String[] splitCmdString) throws IOException {
+	} // end setTransactionActive
 
-        int enteredPin = 0;
+	public int getActiveAccountNum() {
+		return accountNumber;
+	} // end getActiveAccountNum()
 
-        // Check if more than one argument was read from stdin
-        if (!(splitCmdString.length > 1)) {
+	public boolean transactionActive() {
+		return transactionActive;
+	} // end transactionActive()
 
-            // Not enough command line arguments were given so set the
-            // transaction state to inactive and the session request to null
-            transactionActive = false;
-            accountNumber = 0;
-            authenticationRequest = null;
+	public boolean authenticateSession(String[] splitCmdString) throws IOException {
+		// Check if more than one argument was read from stdin
+		if (!(splitCmdString.length > 1)) {
 
-        } // end if length < 1
+			// Not enough command line arguments were given so set the
+			// transaction state to inactive and the session request to null
+			transactionActive = false;
+			accountNumber = 0;
+		} // end if length < 1
 
-        else { // splitCmdString.length IS greater than 1 so multiple args were given
+		else { // splitCmdString.length IS greater than 1 so multiple args were given
 
-            // Prepare and read the original.ATM card for the requested username
-            cardFile = new File(splitCmdString[1] + ".card");
+			// Prepare and read the original.ATM card for the requested username
+			cardFile = new File(splitCmdString[1] + ".card");
 
-            // if the card doesn't exist with the given user name
-            if (!cardFile.isFile()) {
+			// if the card doesn't exist with the given user name
+			if (!cardFile.isFile()) {
 
-                // User's name does not match the card or the file doesn't exist so set the
-                // transaction state to inactive and the session request to null
-                transactionActive = false;
-                accountNumber = 0;
-                authenticationRequest = null;
+				// User's name does not match the card or the file doesn't exist so set the
+				// transaction state to inactive and the session request to null
+				transactionActive = false;
+				accountNumber = 0;
+			} // end if not a valid card file
 
-            } // end if not a valid card file
+			else { // this IS a valid card file
 
-            else { // this IS a valid card file
+				// Read the original.ATM card into a class variable
+				atmCard = (AtmCard) Disk.load(splitCmdString[1] + ".card");
 
-                // Read the original.ATM card into a class variable
-                atmCard = (AtmCardClass) Disk.load(splitCmdString[1] + ".card");
+				// Check that the name within the card matches the given name
+				if (!atmCard.getName().matches(splitCmdString[1])) {
+					// User's name does not match the card or the file doesn't exist so set the
+					// transaction state to inactive and the session request to null
+					transactionActive = false;
+					accountNumber = 0;
+				} // end if (!atmCard.getName().matches(splitCmdString[1]))
+				// All checks have passed so prompt for the pin
+				else {
+					// Get the required information out of the card and prepare the message
+					this.accountNumber = atmCard.getAccountNumber();
+				}
+			} // end else this IS a valid card file
+		} // end else splitCmdString.length IS greater than 1 so multiple args were given
+		return this.transactionActive;
+	} // end authenticateSession
 
-                // Check that the name within the card matches the given name
-                if (!atmCard.getName().matches(splitCmdString[1])) {
-                    // User's name does not match the card or the file doesn't exist so set the
-                    // transaction state to inactive and the session request to null
-                    transactionActive = false;
-                    accountNumber = 0;
-                    authenticationRequest = null;
+	public void authenticationMessage(AuthenticationMessage authenticationMessage) {
+		// Set the transaction state true or false
+		if (transactionActive = authenticationMessage.isSessionValid() == true) {
+			System.out.println("User " + atmCard.getName() + " is Authorized");
+		} // end if transactionActive
+		else {
+			System.out.println("Unauthorized");
+		} // end else
 
-                } // end if (!atmCard.getName().matches(splitCmdString[1]))
-                // All checks have passed so prompt for the pin
-                else {
-                    // Get the pin
-                    System.out.print("Enter your PIN: ");
-                    enteredPin = cin.readInt();
+	} // end sessionResponse
 
-                    // Get the required information out of the card and prepare the message
-                    this.accountNumber = atmCard.getAccountNumber();
-                    authenticationRequest = new AuthenticationRequest(enteredPin, atmCard.getAccountNumber());
-                }
-
-            } // end else this IS a valid card file
-
-        } // end else splitCmdString.length IS greater than 1 so multiple args were given
-
-        // Return the message to be sent, or null
-        return authenticationRequest;
-
-    } // end authenticateSession
-
-    public void authenticationResponse(AuthenticationResponse authenticationResponse) {
-
-        try {
-            // Set the transaction state true or false
-            if (transactionActive = authenticationResponse.isSessionValid() == true) {
-
-                // Set the active active account number
-                accountNumber = authenticationResponse.getAccountNumber();
-
-                System.out.println("User " + atmCard.getName() + " is Authorized");
-
-            } // end if transactionActive
-            else {
-
-                System.out.println("Unauthorized");
-            } // end else
-
-        } catch (UnknownError e) {
-            e.getMessage();
-            e.printStackTrace();
-        } // end catch
-    } // end sessionResponse
-
-    public void balanceResponse(BalanceResponse balanceResponse) {
-        System.out.println("balance: $" + balanceResponse.getBalance());
-    } // end processBalanceResponse
-
-    private void readAtmCard(String[] splitCmdString) throws IOException {
-
-        // Prepare and read the original.ATM card for the requested username
-        cardFile = new File(splitCmdString[1] + ".card");
-
-        if (!cardFile.isFile()) {
-
-            // Not a valid card file so set the card class variable to null.
-            atmCard = null;
-
-        } else { // this IS a valid card file
-
-            // Load the contents of the stored card into the card class variable.
-            atmCard = (AtmCardClass) Disk.load(splitCmdString[1] + ".card");
-        }
-
-    } // end readAtmCard
+	public void balanceResponse(BalanceResponse balanceResponse) {
+		System.out.println("balance: $" + balanceResponse.getBalance());
+	} // end processBalanceResponse
 
 	public void withdrawResponse(WithdrawResponse payload) {
 		double amt = payload.getWithdrawAmount();

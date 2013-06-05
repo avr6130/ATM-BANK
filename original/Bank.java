@@ -33,10 +33,7 @@ public class Bank {
             // The files used for ATM cards are also created within the AccountManager.
             if (Boolean.getBoolean(PropertiesFile.VM_PROP_BUILD_EXT_DATA)) {
                 // Set up initial accounts with account names and balances
-                accountManager.createAccount("Alice", 100.00);
-                accountManager.createAccount("Bob", 100.00);
-                accountManager.createAccount("Carol", 0.00);
-
+                accountManager.createAccounts();
                 accountManager.storeAllAccounts();
             }
             else {

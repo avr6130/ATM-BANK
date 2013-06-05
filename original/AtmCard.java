@@ -9,15 +9,15 @@ import java.io.Serializable;
  * Time: 1:15 PM
  * To change this template use File | Settings | File Templates.
  */
-public class AtmCardClass implements Serializable {
+public class AtmCard implements Serializable {
 
     private String customerName;
     private int accountNumber;
 
     // Default constructor used for reading in the card file on disk
-    public AtmCardClass() {}
+    public AtmCard() {}
 
-    public AtmCardClass(String name, int accountNumber) {
+    public AtmCard(String name, int accountNumber) {
         this.customerName = name;
         this.accountNumber = accountNumber;
     } // end original.AtmCardClass constructor

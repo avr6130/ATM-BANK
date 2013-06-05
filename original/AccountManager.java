@@ -5,8 +5,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 
 import authority.G2Constants;
-
-import messaging.AuthenticationRequest;
+import crypto.keyexchange.messages.SecretExchangePayload;
 
 /**
  * Created with IntelliJ IDEA.
@@ -24,14 +23,21 @@ public class AccountManager {
     private final long LOCKOUT_DURATION = Integer.parseInt(
     		PropertiesFile.getProperty(PropertiesFile.LOCKOUT_DURATION, "60")) * G2Constants.SEC_TO_MSEC;
     private static int accountNumber = 16849327;
-    private static int initialPin = 1095;
+    private static String initialPin = "1095";
     private static HashMap<Integer, Account> acctMap = new HashMap<Integer, Account>();
 
-    public void createAccount(String customerName, double initialBalance) throws IOException {
+    public void createAccounts() throws IOException {
+    	this.createAccount("Alice", 16849327, "1095", 100.0);
+    	this.createAccount("Bob", 12049343, "3673", 100.0);
+    	this.createAccount("Carol", 30414389, "6251", 0.0);
+
+    }
+    
+    public void createAccount(String customerName, int accountNumber, String pin, double initialBalance) throws IOException {
 
         try {
             // Create the account, including an ATM card internal to constructor.
-            Account newAcct = new Account(customerName, accountNumber, initialPin, initialBalance);
+            Account newAcct = new Account(customerName, accountNumber, pin, initialBalance);
             
         	// Add Accounts to bank
         	acctMap.put(newAcct.getID(), newAcct);
@@ -51,7 +57,10 @@ public class AccountManager {
     } // end createAccount
 
     public void retrieveAllAccounts() throws IOException {
-    	acctMap = (HashMap<Integer, Account>)Disk.load("accountsFile");
+    	Object obj = Disk.load("accountsFile");
+    	if (obj instanceof HashMap) {
+    		acctMap = (HashMap<Integer, Account>) obj;
+    	}
     	if (PropertiesFile.isDebugMode()) {
         	System.out.println(acctMap);
         }
@@ -65,19 +74,19 @@ public class AccountManager {
         }
     } // end storeAllAccounts
 
-    public void createAtmCardFile(AtmCardClass atmCard) throws IOException {
+    public void createAtmCardFile(AtmCard atmCard) throws IOException {
         Disk.save(atmCard, atmCard.getName() + ".card");
     } // end createAtmCardFile
 
-    public AtmCardClass retrieveAtmCard(String name) throws IOException {
-        return (AtmCardClass) Disk.load(name + ".card");
+    public AtmCard retrieveAtmCard(String name) throws IOException {
+        return (AtmCard) Disk.load(name + ".card");
     } // end retrieveCard
 
-    public boolean authenticateRequest(AuthenticationRequest msg) {
+    public boolean authenticateSession(SecretExchangePayload sessionPayload) {
 
     	boolean authorized = false;
     	
-        Account currAcct = acctMap.get(msg.getAccountNumber());
+        Account currAcct = acctMap.get(sessionPayload.getAccountNumber());
 
         if (currAcct.getNextValidLoginTime() > System.currentTimeMillis()) {
 
@@ -101,7 +110,7 @@ public class AccountManager {
         } // end if now MAX_FAILED_ATTEMPTS
 
         // Check the pin
-        else if (msg.getPin() != currAcct.getPin()) {
+        else if (!currAcct.getPin().equals(sessionPayload.getPin())) {
             System.out.println("\nRemote command processed. PIN didn't match.");
             currAcct.incrementCurrentNumOfFailedLoginAttempts();
 
@@ -168,13 +177,6 @@ public class AccountManager {
     	}
     	
 		return 0;
-    }
-
-
-    public static boolean validate(int acct_no, int pin_no)
-    {
-    	Account acct = acctMap.get(acct_no);
-        return acct.getPin() == pin_no;
     }
 
 	public static boolean isAcctNumValid(int acctNum) {

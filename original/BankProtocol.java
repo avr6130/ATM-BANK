@@ -8,8 +8,6 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.HashMap;
 
-import messaging.AuthenticationRequest;
-import messaging.AuthenticationResponse;
 import messaging.BalanceRequest;
 import messaging.BalanceResponse;
 import messaging.Message;
@@ -21,6 +19,7 @@ import messaging.WithdrawResponse;
 import crypto.CryptoAES;
 import crypto.keyexchange.KeyExchangeSupport;
 import crypto.keyexchange.KeyExchangeSupport.AppMode;
+import crypto.keyexchange.messages.AuthenticationMessage;
 import crypto.keyexchange.messages.CertificateResponseMessage;
 import crypto.keyexchange.messages.KeyExchangeMessage;
 import crypto.keyexchange.messages.SecretExchangeMessage;
@@ -84,11 +83,23 @@ public class BankProtocol implements Protocol {
 			responseMsg = new CertificateResponseMessage(this.keyExchangeSupport.getBankCertificate(), sessionId);
 		}
 		else if (msgObject.mType == KeyExchangeMessage.MessageType.SecretExchange) {
-			SecretExchangePayload payload = (SecretExchangePayload) keyExchangeSupport.decryptSecret(((SecretExchangeMessage) msgObject).getSealedPayload());
-			Integer sessionId = Integer.valueOf(payload.getSessionId());
+			SecretExchangePayload sessionPayload = (SecretExchangePayload) keyExchangeSupport.decryptSecret(((SecretExchangeMessage) msgObject).getSealedPayload());
+			Integer sessionId = Integer.valueOf(sessionPayload.getSessionId());
 			if (this.sessionMap.containsKey(sessionId)) {
-				SessionInfo sessionInfo = new SessionInfo(payload.getAccountNumber(), payload.getSessionKey());
-				this.sessionMap.put(sessionId, sessionInfo);
+				
+				boolean authenticated = this.accountManager.authenticateSession(sessionPayload);
+				if (authenticated) {
+					SessionInfo sessionInfo = new SessionInfo(
+							sessionPayload.getAccountNumber(), 
+							sessionPayload.getSessionKey());
+					this.sessionMap.put(sessionId, sessionInfo);
+				} else {
+					this.sessionMap.remove(sessionId);
+				}
+				// Create the SessionResponse object and give it the account number and result of PIN validation.
+				responseMsg = new AuthenticationMessage(
+						sessionPayload.getAccountNumber(), 
+						authenticated);
 			} else {
 				if (PropertiesFile.isDebugMode()) {
 					System.err.println("processMessage: Session ID not valid for msgObject=" + msgObject);
@@ -122,13 +133,6 @@ public class BankProtocol implements Protocol {
 		}
 
 		stdIn.close();
-	}
-
-	private Payload generateAuthenticationResponse(Integer sessionId, AuthenticationRequest authRequest) {
-		boolean authenticated = this.accountManager.authenticateRequest(authRequest);
-
-		// Create the SessionResponse object and give it the account number and result of PIN validation.
-		return new AuthenticationResponse(authRequest.getAccountNumber(), authenticated);
 	}
 	
 	private Payload generateBalanceResponse(Integer sessionId, BalanceRequest balanceRequest) {
@@ -176,9 +180,6 @@ public class BankProtocol implements Protocol {
 		// process message
 		else if (!sessionInfo.isValid() || requestPayload instanceof TerminationRequest) {
 			responsePayload = this.generateTerminationResponse(sessionId);
-		}
-		else if (requestPayload instanceof AuthenticationRequest) {
-			responsePayload = this.generateAuthenticationResponse(sessionId, (AuthenticationRequest) requestPayload);
 		}
 		else if (requestPayload instanceof BalanceRequest) {
 			responsePayload = this.generateBalanceResponse(sessionId, (BalanceRequest) requestPayload);
