@@ -4,17 +4,17 @@ import javax.crypto.SealedObject;
 
 public class SecretExchangeMessage extends KeyExchangeMessage {
 
-	private SealedObject so;
+	private SealedObject sealedPayload;
 	private int sessionId;
 
-	public SecretExchangeMessage(SealedObject so, int sessionId) {
+	public SecretExchangeMessage(SealedObject sealedPayload, int sessionId) {
 		super(KeyExchangeMessage.MessageType.SecretExchange);
-		this.so = so;
+		this.sealedPayload = sealedPayload;
 		this.sessionId = sessionId;
 	}
 
-	public SealedObject getSecret() {
-		return so;
+	public SealedObject getSealedPayload() {
+		return sealedPayload;
 	}
 	
 	public int getSessionId() {

@@ -1,19 +1,21 @@
 package crypto.keyexchange;
 
-import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Security;
 import java.security.Signature;
 import java.security.SignedObject;
 
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.CipherInputStream;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SealedObject;
 
 import original.PropertiesFile;
@@ -23,20 +25,20 @@ import crypto.RSAKeyInfo;
 import crypto.RSAKeyPairInfo;
 
 public class KeyExchangeSupport {
-	
+
 	public static enum AppMode {
 		ATM(), BANK();
 	}
 
 	private static final String pkAlgorithm = "RSA/ECB/PKCS1Padding";
-	
+
 	private final AppMode mode;
-	
+
 	/**
 	 * only the ATM has this
 	 */
 	private final PublicKey root;
-	
+
 	/**
 	 * only the bank has this 
 	 */
@@ -46,14 +48,14 @@ public class KeyExchangeSupport {
 	 * only the bank has this 
 	 */
 	private final SignedObject bankCertificate;
-	
+
 	public KeyExchangeSupport(AppMode mode) {
 		if (PropertiesFile.isDebugMode()) {
 			System.out.println("Security Providers=" + Security.getProviders());
 		}
-		
+
 		this.mode = mode;
-		
+
 		if (mode == AppMode.ATM) {
 			//must be in ATM Mode
 			this.root = (PublicKey) KeyExchangeSupport.readKey(G2Constants.CA_NAME + G2Constants.CA_PUBLIC_KEY_SER_FILE_SUFFIX);
@@ -67,7 +69,7 @@ public class KeyExchangeSupport {
 			this.bankCertificate = (SignedObject) KeyExchangeSupport.readKey(G2Constants.BANK_NAME + G2Constants.CERTIFICATE_SER_FILE_SUFFIX);
 		}
 	}
-	
+
 	/**
 	 * Used by BANK
 	 * @return the bank's certificate
@@ -79,10 +81,10 @@ public class KeyExchangeSupport {
 			}
 			return this.bankCertificate;
 		}
-		
+
 		return null;
 	}
-	
+
 	/**
 	 * Used by ATM
 	 * @param bankSignedObject
@@ -92,7 +94,7 @@ public class KeyExchangeSupport {
 		if (this.mode != AppMode.ATM) {
 			return null;
 		}
-			
+
 		try {
 			//first validate the signed object using the CA's root key
 			Signature sig = Signature.getInstance(G2Constants.SIGNATURE_ALGORITHM);
@@ -105,26 +107,26 @@ public class KeyExchangeSupport {
 			if (!KeyExchangeSupport.pubKeysEqual(this.root, cert.getCaKey())) {
 				return null;
 			}
-			
+
 			//next compare the CA name with the one in the certificate
 			if (!G2Constants.CA_NAME.equals(cert.getCaName())) {
 				return null;
 			}
-			
+
 			//finally compare the bank name
 			if (!G2Constants.BANK_NAME.equals(bankName)) {
 				return null;
 			}
-			
+
 			//if we get here then all is well so return the bank's public key
 			return cert.getBankKey();
-			
+
 		} catch (Exception e) {
 			//the signed object probably didn't contain a certificate
 			return null;
 		}
 	}
-	
+
 	/**
 	 * Used by ATM - takes the serializable secret information and encrypts it using the 
 	 * PublicKey of the bank which must have been extracted from the certificate the bank 
@@ -135,20 +137,12 @@ public class KeyExchangeSupport {
 	 */
 	public SealedObject encryptSecret(Serializable secret, PublicKey bankPublicKey) {
 		if (this.mode != AppMode.ATM) {
-//			return new byte[0];
 			return null;
 		}
-		
-//		ObjectOutputStream oos = null;
+
 		try {
 			Cipher rsaCipher = Cipher.getInstance(KeyExchangeSupport.pkAlgorithm);
 			rsaCipher.init(Cipher.ENCRYPT_MODE, bankPublicKey);
-//			ByteArrayOutputStream baos = new ByteArrayOutputStream(4096);
-//			CipherOutputStream cos = new CipherOutputStream(baos, rsaCipher);
-//			oos = new ObjectOutputStream(cos);
-//			oos.writeObject(secret);
-//			oos.flush();
-//			return baos.toByteArray();
 			SealedObject so = new SealedObject(secret, rsaCipher);
 			return so;
 		} catch (Exception e) {
@@ -158,7 +152,7 @@ public class KeyExchangeSupport {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Used by BANK
 	 *- takes the byte array which must be an encrypted serialized object and recovers
@@ -170,34 +164,14 @@ public class KeyExchangeSupport {
 		if (this.mode != AppMode.BANK) {
 			return null;
 		}
-		ObjectInputStream ois = null;
+
 		try {
 			Cipher rsaCipher = Cipher.getInstance(KeyExchangeSupport.pkAlgorithm);
 			rsaCipher.init(Cipher.DECRYPT_MODE, this.bankPrivate);
-//			ByteArrayInputStream bais = new ByteArrayInputStream(secretBytes);
-//			CipherInputStream cis = new CipherInputStream(bais, rsaCipher);
-//			ois = new ObjectInputStream(cis);
-			
-			Object obj = so.getObject(rsaCipher);
-			
-			if (PropertiesFile.isDebugMode()) {
-				System.out.println("sealed object had obj=" + obj);
-			}
-			
-			return obj;
-		} catch (Exception e) {
+			return so.getObject(rsaCipher);
+		} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | ClassNotFoundException | IllegalBlockSizeException | BadPaddingException | IOException e) {
 			if (PropertiesFile.isDebugMode()) {
 				e.printStackTrace();
-			}
-		} finally {
-			if (ois != null) {
-				try {
-					ois.close();
-				} catch (IOException e) {
-					if (PropertiesFile.isDebugMode()) {
-						e.printStackTrace();
-					}
-				}
 			}
 		}
 		return null;
@@ -206,7 +180,7 @@ public class KeyExchangeSupport {
 	private static boolean pubKeysEqual(PublicKey key1, PublicKey key2) {
 		byte[] rootBytes = key1.getEncoded();
 		byte[] caBytes = key2.getEncoded();
-		
+
 		if (caBytes.length != rootBytes.length) {
 			return false;
 		}
@@ -216,7 +190,7 @@ public class KeyExchangeSupport {
 				return false;
 			}
 		}
-		
+
 		return true;
 	}
 
@@ -226,7 +200,7 @@ public class KeyExchangeSupport {
 			ObjectInputStream keyInputStream = new ObjectInputStream(new FileInputStream(keyFileName));
 			Object key = keyInputStream.readObject();
 			keyInputStream.close();
-			
+
 			//validate the file return
 			if (key == null) {
 				return null;
@@ -238,9 +212,9 @@ public class KeyExchangeSupport {
 					!(key instanceof SignedObject)) {
 				return null;
 			}
-			
+
 			return (Serializable) key;
-			
+
 		} catch (Exception e) {
 			if (PropertiesFile.isDebugMode()) {
 				e.printStackTrace();

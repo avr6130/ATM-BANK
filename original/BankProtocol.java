@@ -84,7 +84,7 @@ public class BankProtocol implements Protocol {
 			responseMsg = new CertificateResponseMessage(this.keyExchangeSupport.getBankCertificate(), sessionId);
 		}
 		else if (msgObject.mType == KeyExchangeMessage.MessageType.SecretExchange) {
-			SecretExchangePayload payload = (SecretExchangePayload) keyExchangeSupport.decryptSecret(((SecretExchangeMessage) msgObject).getSecret());
+			SecretExchangePayload payload = (SecretExchangePayload) keyExchangeSupport.decryptSecret(((SecretExchangeMessage) msgObject).getSealedPayload());
 			Integer sessionId = Integer.valueOf(payload.getSessionId());
 			if (this.sessionMap.containsKey(sessionId)) {
 				SessionInfo sessionInfo = new SessionInfo(payload.getAccountNumber(), payload.getSessionKey());
