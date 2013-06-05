@@ -31,7 +31,9 @@ public class TransactionManager {
 	}
 
 	public TransactionManager() {
-		this.sessionKey = (Key) Keygen.generateKey("AES", 128);
+		String algorithmName = PropertiesFile.getProperty(PropertiesFile.SESSION_ALGORITHM_NAME, "AES");
+		int keysize = Integer.parseInt(PropertiesFile.getProperty(PropertiesFile.SESSION_ALGORITHM_KEYSIZE, "128"));
+		this.sessionKey = (Key) Keygen.generateKey(algorithmName, keysize);
 	}
 
 	public Key getSessionKey() {

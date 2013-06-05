@@ -8,7 +8,6 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.Security;
 import java.security.Signature;
 import java.security.SignedObject;
 
@@ -30,7 +29,7 @@ public class KeyExchangeSupport {
 		ATM(), BANK();
 	}
 
-	private static final String pkAlgorithm = "RSA/ECB/PKCS1Padding";
+	private static final String pkAlgorithm = PropertiesFile.getProperty(PropertiesFile.CIPHER_TRANSFORMATION, "RSA/ECB/PKCS1Padding");
 
 	private final AppMode mode;
 
@@ -50,10 +49,6 @@ public class KeyExchangeSupport {
 	private final SignedObject bankCertificate;
 
 	public KeyExchangeSupport(AppMode mode) {
-		if (PropertiesFile.isDebugMode()) {
-			System.out.println("Security Providers=" + Security.getProviders());
-		}
-
 		this.mode = mode;
 
 		if (mode == AppMode.ATM) {
@@ -143,6 +138,7 @@ public class KeyExchangeSupport {
 		try {
 			Cipher rsaCipher = Cipher.getInstance(KeyExchangeSupport.pkAlgorithm);
 			rsaCipher.init(Cipher.ENCRYPT_MODE, bankPublicKey);
+			// seal the secret using the bank's public key
 			SealedObject so = new SealedObject(secret, rsaCipher);
 			return so;
 		} catch (Exception e) {

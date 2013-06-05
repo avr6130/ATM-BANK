@@ -12,6 +12,17 @@ public class PropertiesFile {
 	public static final String LOGIN_ATTEMPTS = "LoginAttempts";
 	public static final String LOCKOUT_DURATION = "LockoutDuration";
 	
+	public static final String CIPHER_TRANSFORMATION = "cipher.transformation";
+	
+	public static final String CA_ALGORITHM_NAME = "ca.algorithm.name";
+	public static final String CA_ALGORITHM_KEYSIZE = "ca.algorithm.keysize";
+	
+	public static final String BANK_ALGORITHM_NAME = "bank.algorithm.name";
+	public static final String BANK_ALGORITHM_KEYSIZE = "bank.algorithm.keysize";
+	
+	public static final String SESSION_ALGORITHM_KEYSIZE = "session.algorithm.keysize";
+	public static final String SESSION_ALGORITHM_NAME = "session.algorithm.name";
+	
 	public static final String VM_PROP_BUILD_EXT_DATA = "buildExtData";
 	
 	private static Properties props;

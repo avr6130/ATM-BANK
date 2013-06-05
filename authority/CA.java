@@ -4,7 +4,6 @@ import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -17,8 +16,8 @@ import java.security.Signature;
 import java.security.SignedObject;
 import java.security.spec.RSAPrivateKeySpec;
 import java.security.spec.RSAPublicKeySpec;
-import java.util.Properties;
 
+import original.PropertiesFile;
 import crypto.Certificate;
 import crypto.Keygen;
 import crypto.RSAKeyInfo;
@@ -72,7 +71,7 @@ public class CA {
 			}
 			
 			//generate a key pair for the bank
-			int keySize = getBankKeyPairSize();
+			int keySize = Integer.parseInt(PropertiesFile.getProperty(PropertiesFile.BANK_ALGORITHM_KEYSIZE, "4096"));
 			Object obj = Keygen.generateKey("RSA", keySize);
 			if (obj == null) {
 				System.out.println("Bank key pair Keygen returned null");
@@ -150,7 +149,7 @@ public class CA {
 
 	private static void generateCAKeyPair() {
 		System.out.println("CA Key Generation Started");
-		int keySize = getCAKeyPairSize();
+		int keySize = Integer.parseInt(PropertiesFile.getProperty(PropertiesFile.CA_ALGORITHM_KEYSIZE, "4096"));
 		Object obj = Keygen.generateKey("RSA", keySize);
 		if (obj == null) {
 			System.out.println("CA Keygen returned null");
@@ -243,53 +242,4 @@ public class CA {
 			return null;
 		}
 	}
-
-	private static int getCAKeyPairSize() {
-		Properties prop = new Properties();
-	
-		try {
-			//load a properties file
-			prop.load(new FileInputStream("keysizeconfig.properties"));
-	
-			//get the property value
-			return Integer.decode(prop.getProperty("ca.rsa.keysize"));
-	
-		} catch (IOException ex) {
-			ex.printStackTrace();
-		}
-		return 4096;
-	}
-
-	private static int getBankKeyPairSize() {
-		Properties prop = new Properties();
-	
-		try {
-			//load a properties file
-			prop.load(new FileInputStream("keysizeconfig.properties"));
-	
-			//get the property value
-			return Integer.decode(prop.getProperty("bank.rsa.keysize"));
-	
-		} catch (IOException ex) {
-			ex.printStackTrace();
-		}
-		return 2048;
-	}
-	
-	private static int getAesKeySize() {
-		Properties prop = new Properties();
-	
-		try {
-			//load a properties file
-			prop.load(new FileInputStream("keysizeconfig.properties"));
-	
-			//get the property value
-			return Integer.decode(prop.getProperty("aes.keysize"));
-	
-		} catch (IOException ex) {
-			ex.printStackTrace();
-		}
-		return 128;
-	}
-
 }
