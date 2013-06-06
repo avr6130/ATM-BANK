@@ -70,6 +70,9 @@ public class AccountManager {
 		// external file does not exist
 		catch (FileNotFoundException e) {
 			// Load file from jar
+			if (PropertiesFile.isDebugMode()) {
+				e.printStackTrace();
+			}
 			obj = Disk.load(ACCOUNTS_FILE_NAME);
 		}
 
