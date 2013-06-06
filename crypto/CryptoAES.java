@@ -16,7 +16,7 @@ import javax.crypto.spec.IvParameterSpec;
 
 import messaging.BalanceRequest;
 import messaging.Payload;
-import original.PropertiesFile;
+import util.PropertiesFile;
 
 public class CryptoAES {
 

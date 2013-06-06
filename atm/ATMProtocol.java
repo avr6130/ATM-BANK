@@ -1,4 +1,4 @@
-package original;
+package atm;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -9,6 +9,10 @@ import java.net.Socket;
 import java.security.PublicKey;
 
 import javax.crypto.SealedObject;
+
+import util.PropertiesFile;
+import util.Protocol;
+import util.cin;
 
 import messaging.BalanceRequest;
 import messaging.BalanceResponse;

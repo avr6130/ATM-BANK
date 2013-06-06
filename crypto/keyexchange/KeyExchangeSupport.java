@@ -17,7 +17,7 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SealedObject;
 
-import original.PropertiesFile;
+import util.PropertiesFile;
 import authority.G2Constants;
 import crypto.Certificate;
 import crypto.RSAKeyInfo;

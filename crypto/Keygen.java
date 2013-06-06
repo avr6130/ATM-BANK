@@ -12,7 +12,7 @@ import java.security.spec.RSAPublicKeySpec;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 
-import original.PropertiesFile;
+import util.PropertiesFile;
 
 public class Keygen {
 

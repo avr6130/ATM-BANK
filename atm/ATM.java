@@ -1,7 +1,10 @@
-package original;
+package atm;
 
 import java.io.*;
 import java.net.Socket;
+
+import util.PropertiesFile;
+import util.Protocol;
 
 /**
  * The main class for the ATM.

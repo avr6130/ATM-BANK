@@ -1,19 +1,15 @@
-package original;
+package bank;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
 
+import util.Disk;
+import util.PropertiesFile;
+
+import atm.AtmCard;
 import authority.G2Constants;
 import crypto.keyexchange.messages.SecretExchangePayload;
-
-/**
- * Created with IntelliJ IDEA.
- * User: Group2
- * Date: 5/21/13
- * Time: 9:48 PM
- * To change this template use File | Settings | File Templates.
- */
 
 
 public class AccountManager {
@@ -22,14 +18,27 @@ public class AccountManager {
 			PropertiesFile.getProperty(PropertiesFile.LOGIN_ATTEMPTS, "3"));
 	private final long LOCKOUT_DURATION = Integer.parseInt(
 			PropertiesFile.getProperty(PropertiesFile.LOCKOUT_DURATION, "60")) * G2Constants.SEC_TO_MSEC;
-
+	
+	private static final String ACCOUNTS_FILE_NAME = "Accounts.ser";
+	
 	private static HashMap<Integer, Account> acctMap = new HashMap<Integer, Account>();
 
-	public void createAccounts() throws IOException {
-		this.createAccount("Alice", 16849327, "1095", 100.0);
-		this.createAccount("Bob", 12049343, "3673", 100.0);
-		this.createAccount("Carol", 30414389, "6251", 0.0);
-
+	public void loadAccounts() throws IOException {
+		// Check to see if the system is configured to build external data
+        // The files used for ATM cards are also created within the AccountManager.
+        if (Boolean.getBoolean(PropertiesFile.VM_PROP_BUILD_EXT_DATA)) {
+            // Set up initial accounts with account names and balances
+        	this.createAccount("Alice", 16849327, "1095", 100.0);
+    		this.createAccount("Bob", 12049343, "3673", 100.0);
+    		this.createAccount("Carol", 30414389, "6251", 0.0);
+    		// Store the accounts to disk
+            this.storeAllAccounts();
+        }
+        else {
+        	// retrieve the accounts from the disk
+            this.retrieveAllAccounts();
+        }
+		
 	}
 
 	public void createAccount(String customerName, int accountNumber, String pin, double initialBalance) throws IOException {
@@ -50,7 +59,7 @@ public class AccountManager {
 	} // end createAccount
 
 	public void retrieveAllAccounts() throws IOException {
-		Object obj = Disk.load("accountsFile");
+		Object obj = Disk.load(ACCOUNTS_FILE_NAME);
 		if (obj instanceof HashMap) {
 			acctMap = (HashMap<Integer, Account>) obj;
 		}
@@ -60,7 +69,7 @@ public class AccountManager {
 	} // end retrieveAllAccounts
 
 	public void storeAllAccounts() throws IOException {
-		Disk.save((Serializable) acctMap, "accountsFile");
+		Disk.save((Serializable) acctMap, ACCOUNTS_FILE_NAME);
 		if (PropertiesFile.isDebugMode()) {
 			System.out.println(acctMap);
 		}
@@ -137,7 +146,7 @@ public class AccountManager {
 		return acctNumber;
 	}
 
-	public static void processDep(int acctNo, double amt)
+	public static void deposit(int acctNo, double amt)
 	{
 		Account acct = acctMap.get(acctNo);
 		acct.setBalance(acct.getBal() + amt);
@@ -145,7 +154,7 @@ public class AccountManager {
 	}
 
 
-	public static boolean processWith(int acctNo,double amt) {
+	public static boolean withdraw(int acctNo,double amt) {
 		Account acct = acctMap.get(acctNo);
 
 		//check if $$$ in the bank
@@ -159,7 +168,7 @@ public class AccountManager {
 	}
 
 
-	public static double processBal(int acctNo) {
+	public static double getBalance(int acctNo) {
 		if (acctMap.containsKey(acctNo)){
 			return acctMap.get(acctNo).getBal();
 		}

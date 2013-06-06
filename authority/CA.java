@@ -17,7 +17,7 @@ import java.security.SignedObject;
 import java.security.spec.RSAPrivateKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 
-import original.PropertiesFile;
+import util.PropertiesFile;
 import crypto.Certificate;
 import crypto.Keygen;
 import crypto.RSAKeyInfo;

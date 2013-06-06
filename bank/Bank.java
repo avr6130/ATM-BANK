@@ -1,7 +1,9 @@
-package original;
+package bank;
 
 import java.io.*;
 import java.net.Socket;
+
+import util.PropertiesFile;
 
 /**
  * The main class for the bank. The bank must constantly listen for
@@ -28,17 +30,8 @@ public class Bank {
         int bankPort = Integer.parseInt(args[0]);
 
         try {
-            // Check to see if the file that contains the accounts exists.
-            // If it doesn't then create the accounts and write them to the file.
-            // The files used for ATM cards are also created within the AccountManager.
-            if (Boolean.getBoolean(PropertiesFile.VM_PROP_BUILD_EXT_DATA)) {
-                // Set up initial accounts with account names and balances
-                accountManager.createAccounts();
-                accountManager.storeAllAccounts();
-            }
-            else {
-                accountManager.retrieveAllAccounts();
-            }
+        	// Load the accounts into the system
+            accountManager.loadAccounts();
 
             /* Connect to port */
             Socket socket = new Socket("localhost", bankPort);

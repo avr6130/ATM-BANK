@@ -1,4 +1,4 @@
-package original;
+package atm;
 
 import java.io.Serializable;
 

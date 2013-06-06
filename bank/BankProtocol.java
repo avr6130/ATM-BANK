@@ -1,4 +1,4 @@
-package original;
+package bank;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -7,6 +7,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.HashMap;
+
+import util.PropertiesFile;
+import util.Protocol;
 
 import messaging.BalanceRequest;
 import messaging.BalanceResponse;
@@ -136,14 +139,14 @@ public class BankProtocol implements Protocol {
 	}
 	
 	private Payload generateBalanceResponse(Integer sessionId, BalanceRequest balanceRequest) {
-		return new BalanceResponse(balanceRequest.getAccountNumber(), AccountManager.processBal(balanceRequest.getAccountNumber()));
+		return new BalanceResponse(balanceRequest.getAccountNumber(), AccountManager.getBalance(balanceRequest.getAccountNumber()));
 	}
 	
 	private Payload generateWithdrawResponse(Integer sessionId, WithdrawRequest withdrawRequest) {
 		double amt = withdrawRequest.getWithdrawAmount();
 		int acctNum = withdrawRequest.getAccountNumber();
 		
-		if (AccountManager.processWith(acctNum, amt)) {
+		if (AccountManager.withdraw(acctNum, amt)) {
 			return new WithdrawResponse(acctNum, amt);
 		} else {
 			return new WithdrawResponse(acctNum, 0.0);
@@ -221,11 +224,11 @@ public class BankProtocol implements Protocol {
 
 		if (AccountManager.isAcctNumValid(acctNum)) {
 			if (command.toLowerCase().matches("balance")) {
-				System.out.println("balance: $"+AccountManager.processBal(acctNum));
+				System.out.println("balance: $"+AccountManager.getBalance(acctNum));
 			} else if (command.toLowerCase().matches("deposit")) {
 				double amt = promptForDeposit(); 
 				if (amt > 0){
-					AccountManager.processDep(acctNum, amt);
+					AccountManager.deposit(acctNum, amt);
 					System.out.println("$" + amt + " added to " + name + "'s account");
 				}
 			} else if (command.toLowerCase().matches("withdraw")) {

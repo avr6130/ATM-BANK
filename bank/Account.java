@@ -1,6 +1,9 @@
-package original;
+package bank;
 
 import java.io.*;
+
+import atm.AtmCard;
+
 
 
 public class Account implements Serializable {

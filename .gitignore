@@ -1,4 +1,4 @@
 *.class
 *.card
-*.properties
+*.ser
 accountsFile
