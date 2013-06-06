@@ -1,6 +1,5 @@
 package com.group2.atm;
 
-import java.io.File;
 import java.io.IOException;
 import java.security.Key;
 
@@ -24,7 +23,6 @@ import com.group2.util.PropertiesFile;
 public class TransactionManager {
 	private boolean transactionActive = false;
 	private AtmCard atmCard;
-	private File cardFile;
 	private int accountNumber = 0;
 
 	private Key sessionKey;
@@ -76,26 +74,18 @@ public class TransactionManager {
 			transactionActive = false;
 			accountNumber = 0;
 		} // end if length < 1
+		// splitCmdString.length IS greater than 1 so multiple args were given
+		else { 
+			// Read the original.ATM card into a class variable
+			atmCard = (AtmCard) Disk.load(splitCmdString[1] + ".card");
 
-		else { // splitCmdString.length IS greater than 1 so multiple args were given
-
-			// Prepare and read the original.ATM card for the requested username
-			cardFile = new File(splitCmdString[1] + ".card");
-
-			// if the card doesn't exist with the given user name
-			if (!cardFile.isFile()) {
-
-				// User's name does not match the card or the file doesn't exist so set the
-				// transaction state to inactive and the session request to null
+			// Card did not exist
+			if (atmCard == null) {
 				transactionActive = false;
 				accountNumber = 0;
-			} // end if not a valid card file
-
-			else { // this IS a valid card file
-
-				// Read the original.ATM card into a class variable
-				atmCard = (AtmCard) Disk.load(splitCmdString[1] + ".card");
-
+			}
+			// Found card file
+			else {
 				// Check that the name within the card matches the given name
 				if (!atmCard.getName().matches(splitCmdString[1])) {
 					// User's name does not match the card or the file doesn't exist so set the
@@ -107,9 +97,10 @@ public class TransactionManager {
 				else {
 					// Get the required information out of the card and prepare the message
 					this.accountNumber = atmCard.getAccountNumber();
+					this.transactionActive = true;
 				}
-			} // end else this IS a valid card file
-		} // end else splitCmdString.length IS greater than 1 so multiple args were given
+			}
+		} // end else this IS a valid card file
 		return this.transactionActive;
 	} // end authenticateSession
 
@@ -135,6 +126,14 @@ public class TransactionManager {
 		} else {
 			System.out.println("Insufficient funds.");
 		}
+	}
+
+	@Override
+	public String toString() {
+		return "TransactionManager [transactionActive=" + transactionActive
+				+ ", atmCard=" + atmCard + ", accountNumber=" + accountNumber
+				+ ", sessionKey=" + sessionKey + ", sessionId=" + sessionId
+				+ "]";
 	}
 
 } // end class original.TransactionManager

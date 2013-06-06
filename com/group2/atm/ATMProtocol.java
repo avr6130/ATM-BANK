@@ -77,7 +77,16 @@ public class ATMProtocol implements Protocol {
 				return;
 			}
 			this.transactionManager = new TransactionManager();
-			transactionManager.authenticateSession(splitCmdString);
+			boolean transactionActive = transactionManager.authenticateSession(splitCmdString);
+			
+			if (PropertiesFile.isDebugMode()) {
+				System.out.println("processCommand: transactionManager=" + transactionManager);
+			}
+			
+			if (!transactionActive) {
+				System.out.println("Cannot process card.");
+				return;
+			}
 			
 			this.writer.writeObject(new InitiationMessage());
 			this.processRemoteCommands();

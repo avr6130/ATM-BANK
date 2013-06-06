@@ -1,5 +1,6 @@
 package com.group2.bank;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
@@ -60,7 +61,18 @@ public class AccountManager {
 	} // end createAccount
 
 	public void retrieveAllAccounts() throws IOException {
-		Object obj = Disk.load(ACCOUNTS_FILE_NAME);
+		Object obj = null;
+		
+		// Try to load external file first
+		try {
+			obj = Disk.loadExtFile(ACCOUNTS_FILE_NAME);
+		}
+		// external file does not exist
+		catch (FileNotFoundException e) {
+			// Load file from jar
+			obj = Disk.load(ACCOUNTS_FILE_NAME);
+		}
+
 		if (obj instanceof HashMap) {
 			acctMap = (HashMap<Integer, Account>) obj;
 		}
@@ -87,7 +99,11 @@ public class AccountManager {
 	public boolean authenticateSession(SecretExchangePayload sessionPayload) {
 
 		boolean authorized = false;
-
+		
+		if (PropertiesFile.isDebugMode()) {
+			System.out.println("authenticateSession: sessionPayload=" + sessionPayload);
+		}
+		
 		Account currAcct = acctMap.get(sessionPayload.getAccountNumber());
 
 		if (currAcct.getNextValidLoginTime() > System.currentTimeMillis()) {

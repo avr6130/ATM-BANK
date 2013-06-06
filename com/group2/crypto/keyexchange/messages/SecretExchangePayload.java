@@ -33,4 +33,13 @@ public class SecretExchangePayload implements Serializable {
 		return pin;
 	}
 
+	@Override
+	public String toString() {
+		return "SecretExchangePayload [pin=" + pin + ", sessionId=" + sessionId
+				+ ", accountNumber=" + accountNumber + ", sessionKey="
+				+ sessionKey + "]";
+	}
+	
+	
+
 }

@@ -30,4 +30,10 @@ public class AtmCard implements Serializable {
         return accountNumber;
     } // end getAccountNumber
 
+	@Override
+	public String toString() {
+		return "AtmCard [customerName=" + customerName + ", accountNumber="
+				+ accountNumber + "]";
+	}
+
 } // end original.AtmCardClass
