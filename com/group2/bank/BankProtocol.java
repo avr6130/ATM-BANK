@@ -140,14 +140,14 @@ public class BankProtocol implements Protocol {
 	}
 	
 	private Payload generateBalanceResponse(Integer sessionId, BalanceRequest balanceRequest) {
-		return new BalanceResponse(balanceRequest.getAccountNumber(), AccountManager.getBalance(balanceRequest.getAccountNumber()));
+		return new BalanceResponse(balanceRequest.getAccountNumber(), this.accountManager.getBalance(balanceRequest.getAccountNumber()));
 	}
 	
 	private Payload generateWithdrawResponse(Integer sessionId, WithdrawRequest withdrawRequest) {
 		double amt = withdrawRequest.getWithdrawAmount();
 		int acctNum = withdrawRequest.getAccountNumber();
 		
-		if (AccountManager.withdraw(acctNum, amt)) {
+		if (this.accountManager.withdraw(acctNum, amt)) {
 			return new WithdrawResponse(acctNum, amt);
 		} else {
 			return new WithdrawResponse(acctNum, 0.0);
@@ -167,7 +167,6 @@ public class BankProtocol implements Protocol {
 			if (PropertiesFile.isDebugMode()) {
 				System.err.println("processMessage: SessionInfo does not exist for sessionId=" + sessionId);
 			}
-			//TODO respond to message?
 			return;
 		}
 		
@@ -178,7 +177,6 @@ public class BankProtocol implements Protocol {
 			if (PropertiesFile.isDebugMode()) {
 				System.err.println("processMessage: Bad requestPayload=" + requestPayload);
 			}
-			//TODO respond to message?
 			return;
 		}
 		// process message
@@ -223,13 +221,13 @@ public class BankProtocol implements Protocol {
 
 		int acctNum = AccountManager.lookAcctByName(name);
 
-		if (AccountManager.isAcctNumValid(acctNum)) {
+		if (this.accountManager.isAcctNumValid(acctNum)) {
 			if (command.toLowerCase().matches("balance")) {
-				System.out.println("balance: $"+AccountManager.getBalance(acctNum));
+				System.out.println("balance: $"+this.accountManager.getBalance(acctNum));
 			} else if (command.toLowerCase().matches("deposit")) {
 				double amt = promptForDeposit(); 
 				if (amt > 0){
-					AccountManager.deposit(acctNum, amt);
+					this.accountManager.deposit(acctNum, amt);
 					System.out.println("$" + amt + " added to " + name + "'s account");
 				}
 			} else if (command.toLowerCase().matches("withdraw")) {

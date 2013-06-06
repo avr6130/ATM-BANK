@@ -84,8 +84,14 @@ public class AccountManager {
 		}
 	} // end retrieveAllAccounts
 
-	public void storeAllAccounts() throws IOException {
-		Disk.save((Serializable) acctMap, ACCOUNTS_FILE_NAME);
+	public void storeAllAccounts() {
+		try {
+			Disk.save((Serializable) acctMap, ACCOUNTS_FILE_NAME);
+		} catch (IOException e) {
+			if (PropertiesFile.isDebugMode()) {
+				e.printStackTrace();
+			}
+		}
 		if (PropertiesFile.isDebugMode()) {
 			System.out.println(acctMap);
 		}
@@ -144,13 +150,7 @@ public class AccountManager {
 			authorized = true;
 		} // end else -> entered pin is correct
 
-		try {
-			this.storeAllAccounts();
-		} catch (IOException e) {
-			if (PropertiesFile.isDebugMode()) {
-				e.printStackTrace();
-			}
-		}
+		this.storeAllAccounts();
 		return authorized;
 	} // end authenticateRequest()
 
@@ -166,21 +166,23 @@ public class AccountManager {
 		return acctNumber;
 	}
 
-	public static void deposit(int acctNo, double amt)
+	public void deposit(int acctNo, double amt)
 	{
 		Account acct = acctMap.get(acctNo);
 		acct.setBalance(acct.getBal() + amt);
 		acctMap.put(acctNo, acct);
+		this.storeAllAccounts();
 	}
 
 
-	public static boolean withdraw(int acctNo,double amt) {
+	public boolean withdraw(int acctNo,double amt) {
 		Account acct = acctMap.get(acctNo);
 
 		//check if $$$ in the bank
 		if (acct.getBal() >= amt) {
 			acct.setBalance(acct.getBal() - amt);
 			acctMap.put(acctNo, acct);
+			this.storeAllAccounts();
 			return true;
 		} else {
 			return false;
@@ -188,14 +190,14 @@ public class AccountManager {
 	}
 
 
-	public static double getBalance(int acctNo) {
+	public double getBalance(int acctNo) {
 		if (acctMap.containsKey(acctNo)){
 			return acctMap.get(acctNo).getBal();
 		}
 		return 0;
 	}
 
-	public static boolean isAcctNumValid(int acctNum) {
+	public boolean isAcctNumValid(int acctNum) {
 		return acctMap.containsKey(acctNum);
 	}
 

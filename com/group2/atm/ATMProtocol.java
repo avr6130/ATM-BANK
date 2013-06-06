@@ -232,7 +232,7 @@ public class ATMProtocol implements Protocol {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
 		double amt = 0.0;
-		System.out.print("Enter the amount to withdraw:");
+		System.out.print("Enter the amount to withdraw: $");
 
 		// read the amount to withdraw from the command-line
 		try {

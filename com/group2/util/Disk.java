@@ -11,7 +11,7 @@ import java.io.Serializable;
 public class Disk {
 
 	public static Object load(String objFile) throws IOException {
-		InputStream is = Disk.class.getResourceAsStream("/" + objFile);
+		InputStream is = Disk.class.getResourceAsStream("/resources/" + objFile);
 		if (is == null) {
 			if (PropertiesFile.isDebugMode()) {
 				System.err.println("Resource does not exist.");
@@ -35,7 +35,7 @@ public class Disk {
 	}
 
 	public static Object loadExtFile(String objFile) throws IOException {
-		FileInputStream fis = new FileInputStream(objFile);
+		FileInputStream fis = new FileInputStream("resources/" + objFile);
 		ObjectInputStream ois = new ObjectInputStream(fis);
 		Object obj = null;
 		try {
@@ -55,7 +55,7 @@ public class Disk {
 
 	public static void save(Serializable obj, String objFile) 
 			throws IOException {
-		FileOutputStream fos = new FileOutputStream(objFile);
+		FileOutputStream fos = new FileOutputStream("resources/" + objFile);
 		ObjectOutputStream oos = new ObjectOutputStream(fos);
 		oos.writeObject(obj);
 		oos.close();

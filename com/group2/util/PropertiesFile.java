@@ -29,7 +29,7 @@ public class PropertiesFile {
 
 	private static Properties props;
 
-	private static final String PROP_FILE_NAME_PLAINTEXT = "Group2.properties";
+	private static final String PROP_FILE_NAME_PLAINTEXT = "conf/Group2.properties";
 	private static final String PROP_FILE_NAME_SERIALIZED = "Properties.ser";
 
 	static {
