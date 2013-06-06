@@ -26,6 +26,9 @@ public class PropertiesFile {
 	
 	public static final String VM_PROP_BUILD_EXT_DATA = "buildExtData";
 	
+	public static final String PORT_ATM = "port.atm";
+	public static final String PORT_BANK = "port.bank";
+	
 	private static Properties props;
 	
 	private static final String PROP_FILE_NAME_PLAINTEXT = "Group2.properties";

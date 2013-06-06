@@ -17,13 +17,9 @@ public class ATM {
     public static void main(String[] args) {
     	//Initialize properties
     	PropertiesFile.getProperties();    	
-    	
-        if (args.length != 1) {
-            System.out.println("Usage: java ATM <ATM-port>");
-            System.exit(1);
-        }
 
-        int atmPort = Integer.parseInt(args[0]);
+        // Read port from properties
+        int atmPort = Integer.parseInt(PropertiesFile.getProperty(PropertiesFile.PORT_ATM, "34002"));
 
         try {
             /* Connect to port */

@@ -11,30 +11,25 @@ import util.PropertiesFile;
 
 public class Router {
 
-    final static int BUF_LENGTH = 4096;
-
     public static void main(String[] args) {
     	//Initialize properties
     	PropertiesFile.getProperties();
-    	
-        if (args.length < 2) {
-            System.out.println("Usage: java Router <Bank port> <ATM port>");
-            System.exit(1);
-        }
 
         ServerSocket clientSocket = null;
+        int clientPort = Integer.parseInt(PropertiesFile.getProperty(PropertiesFile.PORT_ATM, "34002"));
         try {
-            clientSocket = new ServerSocket(Integer.parseInt(args[1]));
+        	clientSocket = new ServerSocket(clientPort);
         } catch (IOException e) {
-            System.err.println("Could not listen on port: "+args[1]);
-            System.exit(1);
+            System.err.println("Could not listen on port: " + clientPort);
+            System.exit(-1);
         }
 
         ServerSocket serverSocket = null;
-        try {
-            serverSocket = new ServerSocket(Integer.parseInt(args[0]));
+    	int bankPort = Integer.parseInt(PropertiesFile.getProperty(PropertiesFile.PORT_BANK, "34001"));
+    	try {
+            serverSocket = new ServerSocket(bankPort);
         } catch (IOException e) {
-            System.err.println("Could not listen on port: "+args[0]);
+            System.err.println("Could not listen on port: " + bankPort);
             System.exit(1);
         }
 

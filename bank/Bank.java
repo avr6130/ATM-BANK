@@ -18,16 +18,9 @@ public class Bank {
     public static void main(String[] args) {
     	//Initialize properties
     	PropertiesFile.getProperties();
-    	
-    	//Initialize user accounts
-        open(); 
 
-        if (args.length != 1) {
-            System.out.println("Usage: java Bank <Bank-port>");
-            System.exit(1);
-        }
-
-        int bankPort = Integer.parseInt(args[0]);
+    	// Read port from properties
+        int bankPort = Integer.parseInt(PropertiesFile.getProperty(PropertiesFile.PORT_BANK, "34001"));
 
         try {
         	// Load the accounts into the system
@@ -90,30 +83,4 @@ public class Bank {
             System.exit(0);
         }
     }
-
-
-    public static void processDep(int acctNo, double amt) {
-
-    }
-
-
-    public static int processWith(int acctNo, double amt) {
-        return 0;
-    }
-
-
-    public static double processBal(int acctNo) {
-        return 0.0;
-    }
-
-
-    public static int validate(int acct_no, int pin_no) {
-        return 0;
-    }
-
-
-    public static void open() {
-
-    }
-
 }
