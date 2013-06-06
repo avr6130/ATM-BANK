@@ -6,7 +6,6 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import util.Disk;
 import util.PropertiesFile;
 
 public class Router {
@@ -86,9 +85,6 @@ public class Router {
                 if ((len = atmSocketInputStream.available()) > 0) {
                 	buf = new byte[len];
                     atmSocketInputStream.read(buf,0,len);
-
-                    // First attempt at cracking the communications
-                    Disk.save(buf, "transferredSerializedObject.file");
 
                     bankSocketOutputStream.write(buf,0,len);
                     bankSocketOutputStream.flush();
