@@ -54,12 +54,14 @@ public class BankProtocol implements Protocol {
 	}
 
 	/* Process commands sent through the router. */
-	public void processRemoteCommands(String prompt) throws IOException {
+	public void processRemoteCommands() throws IOException {
 		Object msgObject;
 
 		try {
 			while ((msgObject = reader.readObject()) != null) {
-				System.out.println(msgObject.getClass().getName() + " received");
+				if (PropertiesFile.isDebugMode()) {
+					System.out.println(msgObject.getClass().getName() + " received");
+				}
 				if (msgObject instanceof Message) {
 					this.processMessage((Message) msgObject);
 				}
@@ -72,29 +74,31 @@ public class BankProtocol implements Protocol {
 				// an informational message, the prompt "Bank: " will not be shown unless it
 				// is output here.  Alternatively, it could be removed from here and placed
 				// as the last line of output anywhere the Bank prints a line.
-				System.out.print(prompt);
+				//System.out.print(prompt);
 			}
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}
 	}
 
-	private void processMessage(KeyExchangeMessage msgObject) {
+	private synchronized void processMessage(KeyExchangeMessage msgObject) {
 		KeyExchangeMessage responseMsg = null;
 		if (msgObject.mType == KeyExchangeMessage.MessageType.InitiateExchange) {
 			int sessionId = this.sessionIdCounter++;
-			this.sessionMap.put(Integer.valueOf(sessionId), null);
+			this.sessionMap.put(sessionId, null);
 			responseMsg = new CertificateResponseMessage(this.keyExchangeSupport.getBankCertificate(), sessionId);
 		}
 		else if (msgObject.mType == KeyExchangeMessage.MessageType.SecretExchange) {
 			SecretExchangePayload sessionPayload = (SecretExchangePayload) keyExchangeSupport.decryptSecret(((SecretExchangeMessage) msgObject).getSealedPayload());
-			Integer sessionId = Integer.valueOf(sessionPayload.getSessionId());
+			int sessionId = sessionPayload.getSessionId();
+			
 			if (this.sessionMap.containsKey(sessionId)) {
 				
 				boolean authenticated = this.accountManager.authenticateSession(sessionPayload);
 				if (authenticated) {
 					SessionInfo sessionInfo = new SessionInfo(
 							sessionPayload.getAccountNumber(), 
+							sessionId, 
 							sessionPayload.getSessionKey());
 					this.sessionMap.put(sessionId, sessionInfo);
 				} else {
@@ -139,18 +143,19 @@ public class BankProtocol implements Protocol {
 		stdIn.close();
 	}
 	
-	private Payload generateBalanceResponse(Integer sessionId, BalanceRequest balanceRequest) {
-		return new BalanceResponse(balanceRequest.getAccountNumber(), this.accountManager.getBalance(balanceRequest.getAccountNumber()));
+	private Payload generateBalanceResponse(SessionInfo sessionInfo, BalanceRequest balanceRequest) {
+		return new BalanceResponse(balanceRequest.getAccountNumber(), sessionInfo.getSequenceId(), this.accountManager.getBalance(balanceRequest.getAccountNumber()));
 	}
 	
-	private Payload generateWithdrawResponse(Integer sessionId, WithdrawRequest withdrawRequest) {
+	private Payload generateWithdrawResponse(SessionInfo sessionInfo, WithdrawRequest withdrawRequest) {
 		double amt = withdrawRequest.getWithdrawAmount();
 		int acctNum = withdrawRequest.getAccountNumber();
+		int sequenceId = sessionInfo.getSequenceId();
 		
 		if (this.accountManager.withdraw(acctNum, amt)) {
-			return new WithdrawResponse(acctNum, amt);
+			return new WithdrawResponse(acctNum, sequenceId, amt);
 		} else {
-			return new WithdrawResponse(acctNum, 0.0);
+			return new WithdrawResponse(acctNum, sequenceId, 0.0);
 		}
 	}
 
@@ -158,7 +163,7 @@ public class BankProtocol implements Protocol {
 		Payload responsePayload = null;
 		Message responseMessage = new Message();
 		
-		Integer sessionId = Integer.valueOf(messageObject.getSessionID());
+		int sessionId = messageObject.getSessionID();
 		
 		SessionInfo sessionInfo = this.sessionMap.get(sessionId);
 		
@@ -179,17 +184,27 @@ public class BankProtocol implements Protocol {
 			}
 			return;
 		}
+		
+		// make sure this message is not the same as the last one
+		if (!sessionInfo.isSeqenceIdValid(requestPayload.getSequenceId())) {
+			if (PropertiesFile.isDebugMode()) {
+				System.err.println("Invalid payload sequenceId=" + requestPayload.getSequenceId()
+						+ "\nLast valid sequenceId=" + sessionInfo.getSequenceId());
+			}
+			return;
+		}
+		
 		// process message
-		else if (!sessionInfo.isValid() || requestPayload instanceof TerminationRequest) {
-			responsePayload = this.generateTerminationResponse(sessionId);
+		if (!sessionInfo.isValid() || requestPayload instanceof TerminationRequest) {
+			responsePayload = this.generateTerminationResponse(sessionInfo);
 		}
 		else if (requestPayload instanceof BalanceRequest) {
-			responsePayload = this.generateBalanceResponse(sessionId, (BalanceRequest) requestPayload);
+			responsePayload = this.generateBalanceResponse(sessionInfo, (BalanceRequest) requestPayload);
 		}
 		else if (requestPayload instanceof WithdrawRequest) {
-			responsePayload = this.generateWithdrawResponse(sessionId, (WithdrawRequest) requestPayload);
+			responsePayload = this.generateWithdrawResponse(sessionInfo, (WithdrawRequest) requestPayload);
 		}
-		responseMessage.setSessionId(sessionId.intValue());
+		responseMessage.setSessionId(sessionId);
 		responseMessage.setSealedPayload(CryptoAES.encrypt(sessionInfo.getKey(), responsePayload));
 		try {
 			this.writer.writeObject(responseMessage);
@@ -198,12 +213,15 @@ public class BankProtocol implements Protocol {
 				e.printStackTrace();
 			}
 		}
+		if (PropertiesFile.isDebugMode()) {
+			System.out.println("sent msg=" + responseMessage);
+		}
 	}
 
-	private Payload generateTerminationResponse(Integer sessionId) {
-		SessionInfo sessionInfo = this.sessionMap.remove(sessionId);
+	private Payload generateTerminationResponse(SessionInfo sessionInfo) {
+		this.sessionMap.remove(sessionInfo.getSessionId());
 		sessionInfo.terminateSession();
-		return new TerminationResponse(sessionInfo.getAccountNumber());
+		return new TerminationResponse(sessionInfo.getAccountNumber(), sessionInfo.getSequenceId());
 	}
 
 	/* Process user input. */

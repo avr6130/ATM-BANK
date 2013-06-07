@@ -3,6 +3,7 @@ package com.group2.atm;
 import java.io.IOException;
 import java.security.Key;
 
+import com.group2.authority.G2Constants;
 import com.group2.crypto.Keygen;
 import com.group2.crypto.keyexchange.messages.AuthenticationMessage;
 import com.group2.messaging.BalanceResponse;
@@ -24,30 +25,49 @@ public class TransactionManager {
 	private boolean transactionActive = false;
 	private AtmCard atmCard;
 	private int accountNumber = 0;
-
+	private String pin;
 	private Key sessionKey;
-	private int sessionId;
-
-	public int getSessionId() {
-		return sessionId;
-	}
-
+	private int sequenceId;
+	
 	public TransactionManager() {
 		String algorithmName = PropertiesFile.getProperty(PropertiesFile.SESSION_ALGORITHM_NAME, "AES");
 		int keysize = Integer.parseInt(PropertiesFile.getProperty(PropertiesFile.SESSION_ALGORITHM_KEYSIZE, "128"));
 		this.sessionKey = (Key) Keygen.generateKey(algorithmName, keysize);
 	}
+	
+	public String getPin() {
+		return this.pin;
+	}
+
+	public int getSequenceId() {
+		return this.sequenceId;
+	}
+	
+	public int getSessionId() {
+		return sequenceId / G2Constants.SEQ_NUMBER_MULTIPLIER;
+	}
 
 	public Key getSessionKey() {
 		return this.sessionKey;
 	}
-
-	public void setSessionId(int sessionId) {
-		this.sessionId = sessionId;
+	
+	public void setPin(String pin) {
+		this.pin = pin;
+	}
+	
+	public void setSequenceId(int sequenceId) {
+		this.sequenceId = sequenceId;
+	}
+	
+	public boolean isSeqenceIdValid(int msgSequenceId) {
+		if (msgSequenceId > this.sequenceId) {
+			this.sequenceId = msgSequenceId;
+			return true;
+		}
+		return false;
 	}
 
 	public void endCurrentTransaction() {
-
 		if (!transactionActive) {
 			System.out.println("No user logged in");
 			return;
@@ -132,7 +152,7 @@ public class TransactionManager {
 	public String toString() {
 		return "TransactionManager [transactionActive=" + transactionActive
 				+ ", atmCard=" + atmCard + ", accountNumber=" + accountNumber
-				+ ", sessionKey=" + sessionKey + ", sessionId=" + sessionId
+				+ ", sessionKey=" + sessionKey + ", squenceId=" + sequenceId
 				+ "]";
 	}
 

@@ -10,8 +10,8 @@ public class BalanceResponse extends Payload {
 
     private double balance = 0;
 
-    public BalanceResponse(int accountNumber, double balance) {
-        super(accountNumber);
+    public BalanceResponse(int accountNumber, int sequenceId, double balance) {
+        super(accountNumber, sequenceId);
         this.balance = balance;
     }
 

@@ -11,18 +11,26 @@ import java.io.Serializable;
 public abstract class Payload implements Serializable {
 
     private int accountNumber = 0;
+    
+    private int sequenceId = 0;
 
-    public Payload(int accountNumber) {
+    public Payload(int accountNumber, int sequenceId) {
         this.accountNumber = accountNumber;
+        this.sequenceId = sequenceId + 1;
     }
 
     public int getAccountNumber() {
         return accountNumber;
     }
+    
+    public int getSequenceId() {
+    	return sequenceId;
+    }
 
 	@Override
 	public String toString() {
-		return "Payload [accountNumber=" + accountNumber + "]";
+		return "Payload [accountNumber=" + accountNumber + ", sequenceId="
+				+ sequenceId + "]";
 	}
-
+    
 }

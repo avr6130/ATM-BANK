@@ -10,9 +10,9 @@ public class WithdrawResponse extends Payload {
 
     private double withdrawAmount = 0;
 
-    public WithdrawResponse(int accountNumber, double withdrawAmount) {
-        super(accountNumber);
-        this.withdrawAmount = withdrawAmount;
+    public WithdrawResponse(int accountNumber, int sequenceId, double amt) {
+        super(accountNumber, sequenceId);
+        this.withdrawAmount = amt;
     }
 
     public double getWithdrawAmount() {

@@ -1,10 +1,11 @@
 package com.group2.atm;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.Socket;
 
 import com.group2.util.PropertiesFile;
-import com.group2.util.Protocol;
 
 
 /**
@@ -22,19 +23,47 @@ public class ATM {
         try {
             /* Connect to port */
             Socket socket = new Socket("localhost", atmPort);
-            Protocol atmProtocol = new ATMProtocol(socket);
+            final ATMProtocol atmProtocol = new ATMProtocol(socket);
 
             /* Handle command-line input */
-            System.out.print(prompt);
-            BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
+            Thread local = new Thread() {
+                public void run() {
+                    System.out.print(prompt);
+                    BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
+
+                    try {
+                        atmProtocol.processLocalCommands(stdIn, prompt);
+                    } catch (IOException e) {
+                        System.out.println("Failed to process user input.");
+                        e.printStackTrace();
+                        System.exit(0);
+                    }
+                }
+            };
+
+            /* Handle router input */
+            Thread remote = new Thread() {
+                public void run() {
+                    try {
+                    	atmProtocol.processRemoteCommands();
+                    } catch (IOException e) {
+                        System.out.println("Failed to process remote input.");
+                        e.printStackTrace();
+                        System.exit(0);
+                    }
+                }
+            };
+
+            local.start();
+            remote.start();
 
             try {
-                atmProtocol.processLocalCommands(stdIn, prompt);
-            } catch (IOException e) {
-                System.out.println("Failed to process local input.");
-                System.exit(0);
+                local.join();
+                remote.join();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
-
+            
             /* Clean up */
             try {
                 atmProtocol.close();

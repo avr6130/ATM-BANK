@@ -15,14 +15,17 @@ public class SessionInfo {
 	
 	private int accountNumber = 0;
 	
+	private int sequenceId = 0;
+	
 	private Key key = null;
 	
 	private boolean valid = true;
 	
 	private Timer timeoutTimer;
 	
-	public SessionInfo(int accountNumber, Key key) {
+	public SessionInfo(int accountNumber, int sessionId, Key key) {
 		this.accountNumber = accountNumber;
+		this.sequenceId = sessionId * G2Constants.SEQ_NUMBER_MULTIPLIER;
 		this.key = key;
 		timeoutTimer = new Timer();
 		
@@ -42,6 +45,14 @@ public class SessionInfo {
 		return this.accountNumber;
 	}
 	
+	public int getSequenceId() {
+		return this.sequenceId;
+	}
+	
+	public int getSessionId() {
+		return this.sequenceId / G2Constants.SEQ_NUMBER_MULTIPLIER;
+	}
+	
 	public Key getKey() {
 		return this.key;
 	}
@@ -50,6 +61,14 @@ public class SessionInfo {
 		synchronized (this.timeoutTimer) {
 			return this.valid;
 		}
+	}
+	
+	public boolean isSeqenceIdValid(int msgSequenceId) {
+		if (msgSequenceId > this.sequenceId) {
+			this.sequenceId = msgSequenceId;
+			return true;
+		}
+		return false;
 	}
 	
 	public void terminateSession() {

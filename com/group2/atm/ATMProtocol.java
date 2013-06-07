@@ -56,9 +56,16 @@ public class ATMProtocol implements Protocol {
 	public void processLocalCommands(BufferedReader stdIn, String prompt) throws IOException {
 		String userInput;
 
-		while ((userInput = stdIn.readLine()) != null) {
-			processCommand(userInput);
-			System.out.print(prompt);
+		synchronized (this) {
+			while ((userInput = stdIn.readLine()) != null) {
+				processCommand(userInput);
+				try {
+					this.wait(2000L);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				System.out.print(prompt);
+			}
 		}
 
 		stdIn.close();
@@ -78,25 +85,32 @@ public class ATMProtocol implements Protocol {
 			}
 			this.transactionManager = new TransactionManager();
 			boolean transactionActive = transactionManager.authenticateSession(splitCmdString);
-			
+
+			if (!transactionActive) {
+				System.out.println("Cannot process card.");
+				if (PropertiesFile.isDebugMode()) {
+					System.out.println("processCommand: transactionManager=" + transactionManager);
+				}
+				return;
+			}
+
+			System.out.print("Enter your PIN: ");
+			String pin = cin.readLine();
+			this.transactionManager.setPin(pin);
+
 			if (PropertiesFile.isDebugMode()) {
 				System.out.println("processCommand: transactionManager=" + transactionManager);
 			}
-			
-			if (!transactionActive) {
-				System.out.println("Cannot process card.");
-				return;
-			}
-			
+
 			this.writer.writeObject(new InitiationMessage());
-			this.processRemoteCommands();
-			this.processRemoteCommands();
+			//			this.processRemoteCommands();
+			//			this.processRemoteCommands();
 		}
 		else if (splitCmdString[0].toLowerCase().matches("balance")) {
 			requestPayload = this.generateBalanceRequest();
 		}
 		else if (splitCmdString[0].toLowerCase().matches("withdraw")) {
-			requestPayload = this.generateWithdrawRequest();  	
+			requestPayload = this.generateWithdrawRequest();
 		} 
 		else if (splitCmdString[0].toLowerCase().matches("end-session")) {
 			requestPayload = this.generateTerminationRequest();
@@ -111,15 +125,15 @@ public class ATMProtocol implements Protocol {
 			requestMessage.setSealedPayload(CryptoAES.encrypt(this.transactionManager.getSessionKey(), requestPayload));
 
 			writer.writeObject(requestMessage);
-
-			// After the message is set to bank, prepare to process the response and block
-			processRemoteCommands();
+			if (PropertiesFile.isDebugMode()) {
+				System.out.println("sent msg=" + requestMessage);
+			}
 		}
 
 	} // end processCommand
 
 	private Payload generateTerminationRequest() { 
-		
+
 		if (transactionManager == null || !transactionManager.transactionActive()) {
 			System.out.println("No user logged in");
 			return null;
@@ -136,7 +150,10 @@ public class ATMProtocol implements Protocol {
 
 		double amt = promptForWithdraw();
 		if (amt > 0) {
-			return new WithdrawRequest(transactionManager.getActiveAccountNum(), amt);
+			return new WithdrawRequest(
+					transactionManager.getActiveAccountNum(), 
+					transactionManager.getSequenceId(), 
+					amt);
 		}
 
 		return null;
@@ -148,25 +165,28 @@ public class ATMProtocol implements Protocol {
 			return null;
 		}
 
-		return new BalanceRequest(transactionManager.getActiveAccountNum());
+		return new BalanceRequest(transactionManager.getActiveAccountNum(), 
+				transactionManager.getSequenceId());
 	}
 
 	public void processRemoteCommands() throws IOException {
 		Object msgObject;
 
 		try {
-			msgObject = (Object) reader.readObject();
-			
-			if (PropertiesFile.isDebugMode()) {
-				System.out.println("processRemoteCommands: msgObject=" + msgObject);
+			while ((msgObject = reader.readObject()) != null) {
+				if (PropertiesFile.isDebugMode()) {
+					System.out.println("processRemoteCommands: msgObject=" + msgObject);
+				}
+				if (msgObject instanceof Message) {
+					this.processMessage((Message) msgObject);
+					synchronized (this) {
+						this.notify();
+					}
+				}
+				else if(msgObject instanceof KeyExchangeMessage) {
+					this.processMessage((KeyExchangeMessage) msgObject);
+				}
 			}
-			if (msgObject instanceof Message) {
-				this.processMessage((Message) msgObject);
-			}
-			else if(msgObject instanceof KeyExchangeMessage) {
-				this.processMessage((KeyExchangeMessage) msgObject);
-			}
-
 		} catch (ClassNotFoundException e) {
 			if (PropertiesFile.isDebugMode()) {
 				e.printStackTrace();
@@ -184,15 +204,13 @@ public class ATMProtocol implements Protocol {
 				System.out.println("processMessage: bankPublicKey=" + bankPublicKey);
 			}
 			if (bankPublicKey != null) {
-				
-				System.out.print("Enter your PIN: ");
-                String pin = cin.readLine();
-				this.transactionManager.setSessionId(((CertificateResponseMessage) msgObject).getSessionId());
+
+				this.transactionManager.setSequenceId(((CertificateResponseMessage) msgObject).getSequenceId());
 				SecretExchangePayload secret = new SecretExchangePayload(
 						this.transactionManager.getActiveAccountNum(), 
 						this.transactionManager.getSessionId(), 
 						this.transactionManager.getSessionKey(), 
-						pin);
+						this.transactionManager.getPin());
 				SealedObject so = this.keyExchangeSupport.encryptSecret(secret, bankPublicKey);
 				try {
 					this.writer.writeObject(new SecretExchangeMessage(so, this.transactionManager.getSessionId()));
@@ -212,6 +230,9 @@ public class ATMProtocol implements Protocol {
 			}
 		} else if (msgObject.mType == KeyExchangeMessage.MessageType.AuthenticationResponse) {
 			this.transactionManager.authenticationMessage((AuthenticationMessage) msgObject);
+			synchronized (this) {
+				this.notify();
+			}
 		}
 	}
 
@@ -219,6 +240,15 @@ public class ATMProtocol implements Protocol {
 		// Pull the payload out of the generic message.  The payload is the
 		// specific message type.
 		Payload payload = CryptoAES.decrypt(this.transactionManager.getSessionKey(), msgObject.getSealedPayload());
+
+		// make sure this message is not the same as the last one
+		if (!this.transactionManager.isSeqenceIdValid(payload.getSequenceId())) {
+			if (PropertiesFile.isDebugMode()) {
+				System.err.println("Invalid payload sequenceId=" + payload.getSequenceId()
+						+ "\nLast valid sequenceId=" + this.transactionManager.getSequenceId());
+			}
+			return;
+		}
 
 		if (payload instanceof BalanceResponse) {
 			transactionManager.balanceResponse((BalanceResponse) payload);

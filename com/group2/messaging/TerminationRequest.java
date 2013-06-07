@@ -2,8 +2,8 @@ package com.group2.messaging;
 
 public class TerminationRequest extends Payload {
 
-	public TerminationRequest(int accountNumber) {
-		super(accountNumber);
+	public TerminationRequest(int accountNumber, int sequenceId) {
+        super(accountNumber, sequenceId);
 	}
 
 }

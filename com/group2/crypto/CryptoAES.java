@@ -49,7 +49,7 @@ public class CryptoAES {
 
 			myKey = (Key) Keygen.generateKey(algorithmName, keySize);
 			
-			BalanceRequest msg = new BalanceRequest(0);
+			BalanceRequest msg = new BalanceRequest(0, 0);
 			
 			SealedObject so = CryptoAES.encrypt(myKey, msg);
 			

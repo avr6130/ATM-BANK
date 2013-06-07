@@ -10,6 +10,7 @@ public class G2Constants {
 	public static final String CERTIFICATE_SER_FILE_SUFFIX = "_Certificate.ser";
 	public static final String SIGNATURE_ALGORITHM = "SHA512withRSA";
 	public static final long SEC_TO_MSEC = 1000L;
+	public static final int SEQ_NUMBER_MULTIPLIER = 10000;
 	
 	private G2Constants() {}
 }

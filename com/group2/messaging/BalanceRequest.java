@@ -8,7 +8,7 @@ package com.group2.messaging;
  */
 public class BalanceRequest extends Payload {
 
-    public BalanceRequest(int accountNumber) {
-        super(accountNumber);
+    public BalanceRequest(int accountNumber, int sequenceId) {
+        super(accountNumber, sequenceId);
     }
 }
