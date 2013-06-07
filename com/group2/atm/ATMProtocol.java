@@ -99,7 +99,6 @@ public class ATMProtocol implements Protocol {
 			requestPayload = this.generateWithdrawRequest();  	
 		} 
 		else if (splitCmdString[0].toLowerCase().matches("end-session")) {
-			transactionManager.endCurrentTransaction();
 			requestPayload = this.generateTerminationRequest();
 		}
 		else {
@@ -119,13 +118,18 @@ public class ATMProtocol implements Protocol {
 
 	} // end processCommand
 
-	private Payload generateTerminationRequest() {    	
-
+	private Payload generateTerminationRequest() { 
+		
+		if (transactionManager == null || !transactionManager.transactionActive()) {
+			System.out.println("No user logged in");
+			return null;
+		}
+		transactionManager.endCurrentTransaction();
 		return null;
 	}
 
 	private Payload generateWithdrawRequest() {
-		if (!transactionManager.transactionActive()) {
+		if (this.transactionManager == null || !transactionManager.transactionActive()) {
 			System.out.println("No user logged in");
 			return null;
 		}
@@ -139,7 +143,7 @@ public class ATMProtocol implements Protocol {
 	}
 
 	private Payload generateBalanceRequest() {
-		if (!transactionManager.transactionActive()) {
+		if (this.transactionManager == null || !transactionManager.transactionActive()) {
 			System.out.println("No user logged in");
 			return null;
 		}
